@@ -1,0 +1,79 @@
+# Maintaining eledrone
+
+`eledrone-web` is a fork of [element-hq/element-web](https://github.com/element-hq/element-web)
+carrying local changes on top of upstream.
+
+## Layout
+
+| Ref | Purpose |
+|---|---|
+| `develop` | untouched mirror of upstream's default branch |
+| `eledrone` | **the trunk** — upstream plus every local change; this is what gets built |
+
+Upstream is merged into `eledrone`, never rebased. History is therefore never rewritten, so a commit
+pinned in a build, a tag, or a package someone already installed stays valid forever. The cost is
+merge commits in the log, which is a fair trade.
+
+## Local changes
+
+| Area | Files | Why |
+|---|---|---|
+| Screen-share audio | `apps/desktop/src/screenshareAudio.ts`, `ipc.ts`, `electron-main.ts`, `displayMediaCallback.ts` | Upstream discards the `audio` field of every display-media request. See element-call#3657, element-web#29891 |
+| Arch packaging | `packaging/arch/` | Builds this fork directly |
+
+## Syncing with upstream
+
+```bash
+git fetch upstream --tags
+git checkout develop && git merge --ff-only upstream/develop && git push origin develop
+git checkout eledrone && git merge upstream/develop
+# resolve conflicts, then:
+pnpm install
+(cd apps/desktop && pnpm run lint:types)
+git push origin eledrone && git push origin --tags
+```
+
+Tags matter: `pkgver()` derives the package version from `git describe`, so a fork without upstream's
+tags produces a nonsense version.
+
+### Where conflicts will show up
+
+Only four files are modified and three of them minimally, so conflicts should be rare. The likely
+spot is `electron-main.ts` — upstream occasionally reworks `setDisplayMediaRequestHandler`, and our
+change wraps its callback. If that handler is restructured upstream, re-apply by hand:
+
+1. the handler must receive `request` (upstream binds it as `_`)
+2. `prepareScreenshareAudio()` must resolve **before** `callback(...)` — the capture source has to
+   exist before the page's `getDisplayMedia` resolves
+3. `setDisplayMediaCallback(callback, request.audioRequested)` must keep passing the flag
+
+## Building
+
+**Arch:**
+```bash
+cd packaging/arch && makepkg -si
+```
+Builds `eledrone-web` and `eledrone-desktop`. Both are required: the desktop package ships only the
+Electron shell and symlinks its webapp from the web package.
+
+**Windows:**
+```powershell
+corepack pnpm install
+cd apps/desktop
+corepack pnpm run fetch --noverify --cfgdir ""
+corepack pnpm run build
+```
+Artifacts land in `apps/desktop/dist/` (unpacked directory, MSI, and Squirrel installer). Unsigned,
+so SmartScreen warns on first run. Native modules (`hak`/seshat) are skipped — that only costs
+encrypted-room search, and it logs a harmless `matrix-seshat` module-not-found on startup.
+
+## Gotchas worth remembering
+
+- **`pactl` output is localised.** Anything parsing it must force `LC_ALL=C`, or it silently finds
+  nothing on a non-English system.
+- **`pactl get-default-sink` only exists from PulseAudio 15.** Fall back to parsing `pactl info`.
+- **Chromium never enumerates monitor sources** (`device.class = "monitor"`). Desktop audio has to be
+  exposed through a *remapped* source, which is why the routing exists at all.
+- **Element's own playback must stay out of the share sink**, or remote participants hear themselves.
+- **Electron's `audio: "loopback"` is Windows-only.** Passing it elsewhere breaks screen sharing.
+- **`git describe` needs `--match "v*"`** — the repo carries tags like `module/banner/v1.0.0`.
