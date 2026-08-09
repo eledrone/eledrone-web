@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR GPL-3.0-only OR LicenseRef-Element-Com
 Please see LICENSE files in the repository root for full details.
 */
 
-import { execFile } from "node:child_process";
+import { execFile, spawn, type ChildProcess } from "node:child_process";
 import { promisify } from "node:util";
 import { webFrameMain, type WebContents } from "electron";
 
@@ -52,6 +52,9 @@ interface MovedStream {
 let movedStreams: MovedStream[] = [];
 let loadedModules: string[] = [];
 let teardownTimer: NodeJS.Timeout | undefined;
+/** `pactl subscribe`, running for the duration of a share so applications started mid-share are picked up. */
+let streamWatcher: ChildProcess | undefined;
+let shareActive = false;
 
 async function pactl(args: string[]): Promise<string> {
     // LC_ALL=C is required, not cosmetic: pactl localises its output ("Sink Input #" becomes
@@ -199,11 +202,80 @@ async function moveApplicationsIntoShare(): Promise<void> {
 }
 
 /**
+ * Moves a stream that appeared after the share started. Without this, launching a media player
+ * mid-share leaves it playing to the real output and silently absent from the share - the user has
+ * to stop and restart sharing to pick it up.
+ */
+async function adoptStream(index: string): Promise<void> {
+    if (!shareActive) return;
+    try {
+        // A stream's properties can lag its creation event very slightly, so look twice.
+        for (let attempt = 0; attempt < 2; attempt++) {
+            const stream = parseSinkInputs(await pactl(["list", "sink-inputs"])).find((s) => s.index === index);
+            if (!stream) return; // gone again already
+            if (!stream.application && attempt === 0) {
+                await new Promise((resolve) => setTimeout(resolve, 300));
+                continue;
+            }
+            if (!isMovable(stream)) return;
+            if (movedStreams.some((m) => m.index === index)) return;
+
+            await pactl(["move-sink-input", index, SINK_NAME]);
+            movedStreams.push({ index, originalSink: stream.sink });
+            return;
+        }
+    } catch (err) {
+        console.error(`Screen-share audio: could not add stream ${index} to the share:`, err);
+    }
+}
+
+/**
+ * Watches for new playback streams while a share is running. `pactl subscribe` pushes events, so
+ * there is no polling interval to trade off against responsiveness.
+ */
+function startStreamWatcher(): void {
+    stopStreamWatcher();
+    try {
+        const child = spawn("pactl", ["subscribe"], {
+            env: { ...process.env, LC_ALL: "C", LANG: "C" },
+            stdio: ["ignore", "pipe", "ignore"],
+        });
+        streamWatcher = child;
+
+        let buffered = "";
+        child.stdout.on("data", (chunk: Buffer) => {
+            buffered += chunk.toString();
+            const lines = buffered.split("\n");
+            buffered = lines.pop() ?? "";
+            for (const line of lines) {
+                // Only 'new': a 'change' event can be the user deliberately moving a stream out, and
+                // we should not fight them for it.
+                const event = /^Event 'new' on sink-input #(\d+)/.exec(line.trim());
+                if (event) void adoptStream(event[1]);
+            }
+        });
+        child.on("error", (err) => {
+            console.error("Screen-share audio: cannot watch for new streams:", err);
+        });
+    } catch (err) {
+        console.error("Screen-share audio: cannot watch for new streams:", err);
+    }
+}
+
+function stopStreamWatcher(): void {
+    streamWatcher?.kill();
+    streamWatcher = undefined;
+}
+
+/**
  * Restores every stream we moved and unloads our modules. Safe to call when nothing is set up, and
  * safe to call twice - which matters because it runs both when a share ends and when the app quits.
  */
 export async function teardownScreenshareAudio(): Promise<void> {
     if (process.platform !== "linux") return;
+    // Order matters: while the watcher runs it would adopt the very streams we are handing back.
+    shareActive = false;
+    stopStreamWatcher();
     if (teardownTimer) {
         clearTimeout(teardownTimer);
         teardownTimer = undefined;
@@ -258,7 +330,9 @@ export async function prepareScreenshareAudio(): Promise<void> {
     try {
         await teardownScreenshareAudio(); // clear anything a previous share left behind
         await ensureModules();
+        shareActive = true;
         await moveApplicationsIntoShare();
+        startStreamWatcher();
     } catch (err) {
         console.error("Screen-share audio: setup failed, sharing video only:", err);
         await teardownScreenshareAudio().catch(() => {});
