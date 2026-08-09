@@ -39,6 +39,7 @@ import * as updater from "./updater.js";
 import ProtocolHandler from "./protocol.js";
 import { _t, AppLocalization } from "./language-helper.js";
 import { setDisplayMediaCallback } from "./displayMediaCallback.js";
+import { setupScreenshareAudio } from "./screenshareAudio.js";
 import { setupMacosTitleBar } from "./macos-titlebar.js";
 import { setupMediaAuth } from "./media-auth.js";
 import { type RendererRecovery, setupRendererRecovery } from "./renderer-recovery.js";
@@ -387,8 +388,10 @@ app.on("ready", async () => {
     // renderer stays a permanent blank window the user can only escape by killing the whole app.
     rendererRecovery = setupRendererRecovery(global.mainWindow);
 
+    setupScreenshareAudio(global.mainWindow.webContents);
+
     session.defaultSession.setDisplayMediaRequestHandler(
-        (_, callback) => {
+        (request, callback) => {
             if (process.env.XDG_SESSION_TYPE === "wayland") {
                 // On Wayland, calling getSources() opens the xdg-desktop-portal picker.
                 // The user can only select a single source there, so Electron will return an array with exactly one entry.
@@ -407,7 +410,7 @@ app.on("ready", async () => {
             } else {
                 global.mainWindow?.webContents.send("openDesktopCapturerSourcePicker");
             }
-            setDisplayMediaCallback(callback);
+            setDisplayMediaCallback(callback, request.audioRequested);
         },
         { useSystemPicker: true },
     ); // Use Mac OS 15+ native picker

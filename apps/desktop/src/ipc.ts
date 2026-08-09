@@ -9,7 +9,11 @@ import { app, autoUpdater, desktopCapturer, ipcMain, powerSaveBlocker, TouchBar,
 
 import IpcMainEvent = Electron.IpcMainEvent;
 import { randomArray } from "./utils.js";
-import { getDisplayMediaCallback, setDisplayMediaCallback } from "./displayMediaCallback.js";
+import {
+    getDisplayMediaCallback,
+    isDisplayMediaAudioRequested,
+    setDisplayMediaCallback,
+} from "./displayMediaCallback.js";
 import Store, { clearDataAndRelaunch } from "./store.js";
 import { getConfig } from "./config.js";
 
@@ -144,7 +148,15 @@ ipcMain.on("ipcCall", async function (_ev: IpcMainEvent, payload) {
             }));
             break;
         case "callDisplayMediaCallback":
-            getDisplayMediaCallback()?.({ video: args[0] });
+            getDisplayMediaCallback()?.({
+                video: args[0],
+                // "loopback" captures the system audio mix. Electron only supports it on Windows, and
+                // passing it elsewhere would break screen sharing outright - Linux gets its audio from
+                // the monitor-source path in screenshareAudio.ts instead.
+                ...(process.platform === "win32" && isDisplayMediaAudioRequested()
+                    ? { audio: "loopback" as const }
+                    : {}),
+            });
             setDisplayMediaCallback(null);
             ret = null;
             break;
