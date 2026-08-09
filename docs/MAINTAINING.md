@@ -7,12 +7,16 @@ carrying local changes on top of upstream.
 
 | Ref | Purpose |
 |---|---|
-| `develop` | untouched mirror of upstream's default branch |
-| `eledrone` | **the trunk** — upstream plus every local change; this is what gets built |
+| `develop` | **the trunk** — upstream plus every local change; this is what gets built and released |
 
-Upstream is merged into `eledrone`, never rebased. History is therefore never rewritten, so a commit
-pinned in a build, a tag, or a package someone already installed stays valid forever. The cost is
-merge commits in the log, which is a fair trade.
+All work lands on `develop`, matching the branch name upstream develops on. Upstream is merged into
+it, never rebased. History is therefore never rewritten, so a commit pinned in a build, a tag, or a
+package someone already installed stays valid forever. The cost is merge commits in the log, which is
+a fair trade.
+
+Note this differs from a stock fork, where `develop` mirrors upstream untouched: here it carries local
+changes, so `git merge upstream/develop` will occasionally need conflict resolution rather than always
+fast-forwarding.
 
 ## Local changes
 
@@ -25,12 +29,12 @@ merge commits in the log, which is a fair trade.
 
 ```bash
 git fetch upstream --tags
-git checkout develop && git merge --ff-only upstream/develop && git push origin develop
-git checkout eledrone && git merge upstream/develop
+git checkout develop
+git merge upstream/develop
 # resolve conflicts, then:
 pnpm install
 (cd apps/desktop && pnpm run lint:types)
-git push origin eledrone && git push origin --tags
+git push origin develop && git push origin --tags
 ```
 
 Tags matter: `pkgver()` derives the package version from `git describe`, so a fork without upstream's

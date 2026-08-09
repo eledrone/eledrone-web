@@ -26,7 +26,7 @@ makedepends=(npm git pnpm python python-setuptools rust tcl ${_electron} nodejs 
 
 # Only the repository: the launcher, desktop entry and helper all live inside it, so there are no
 # loose files to checksum and no patch to keep in sync.
-source=("eledrone-web::git+https://github.com/eledrone/eledrone-web.git#branch=eledrone")
+source=("eledrone-web::git+https://github.com/eledrone/eledrone-web.git#branch=develop")
 sha512sums=('SKIP')
 
 _pkgdir() { echo "$srcdir/eledrone-web"; }
