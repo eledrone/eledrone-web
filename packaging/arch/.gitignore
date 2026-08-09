@@ -1,0 +1,9 @@
+# makepkg working directories and output. Building in place is normal for a VCS
+# PKGBUILD - makepkg keeps its own clone here as a source cache, checks out into
+# src/ and stages into pkg/ - but none of it belongs in the repository.
+/src/
+/pkg/
+/eledrone-web/
+*.pkg.tar.zst
+*.pkg.tar.zst.sig
+*.log
