@@ -1,0 +1,118 @@
+# Maintainer: w1erley <v.savchenko@bekey.io>
+#
+# eledrone - Element Desktop with screen-share audio on Windows and Linux.
+#
+# Derived from the AUR recipe element-desktop-git by Cody Wyatt Neiman (xangelix),
+# with contributions from Anthony Wang, teutat3s, jaltek and Daniel Mason.
+#
+# Differences from that recipe:
+#   * builds from this fork, so there is no patch file to regenerate on every upstream sync
+#   * pkgver() matches v* tags only - plain `git describe` resolves to unrelated tags such as
+#     module/banner/v1.0.0 and produces a nonsense version
+#   * installs element-share-audio, the optional helper for sharing a single application
+#
+# Build with: makepkg -si
+
+_electron=electron
+pkgbase=eledrone
+pkgname=(eledrone-web eledrone-desktop)
+pkgver=1.12.25.r82.g29bd05a456
+pkgrel=1
+pkgdesc="Element Desktop with screen-share audio — "
+arch=(x86_64)
+url="https://github.com/eledrone/eledrone-web"
+license=('Apache-2.0')
+makedepends=(npm git pnpm python python-setuptools rust tcl ${_electron} nodejs sqlcipher libxcrypt-compat)
+
+# Only the repository: the launcher, desktop entry and helper all live inside it, so there are no
+# loose files to checksum and no patch to keep in sync.
+source=("eledrone-web::git+https://github.com/eledrone/eledrone-web.git#branch=eledrone")
+sha512sums=('SKIP')
+
+_pkgdir() { echo "$srcdir/eledrone-web"; }
+
+pkgver() {
+  cd "$(_pkgdir)"
+
+  ( set -o pipefail
+    # Match version tags only; the repo also carries tags like module/banner/v1.0.0.
+    git describe --long --tags --match "v*" | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+  )
+}
+
+prepare() {
+  # Force non-interactive execution for headless/automated scripts
+  export NX_NON_INTERACTIVE=true
+  export CI=true
+
+  cd "$(_pkgdir)"
+
+  # Specify electron version in launcher
+  sed -i "s|@ELECTRON@|${_electron}|" packaging/arch/element-desktop.sh
+
+  # Package to a plain directory; we install its contents ourselves.
+  sed -i 's|"target": "deb"|"target": "dir"|' apps/desktop/package.json
+  # Never let the packaged build try to update itself; pacman owns these files.
+  sed -i 's|"https://packages.element.io/desktop/update/"|null|' apps/desktop/element.io/release/config.json
+
+  pnpm install
+}
+
+build() {
+  export NX_NON_INTERACTIVE=true
+  export CI=true
+
+  cd "$(_pkgdir)/apps/web"
+  pnpm build
+
+  cd ../desktop
+  pnpm run build --publish never
+}
+
+package_eledrone-web() {
+  pkgdesc+="web assets."
+  provides=(element-web)
+  conflicts=(element-web element-web-git)
+
+  cd "$(_pkgdir)/apps/web"
+
+  install -d "${pkgdir}"/{usr/share/webapps,etc/webapps}/element
+
+  cp -r webapp/* "${pkgdir}"/usr/share/webapps/element/
+  install -Dm644 config.sample.json -t "${pkgdir}"/etc/webapps/element/
+  ln -s /etc/webapps/element/config.json "${pkgdir}"/usr/share/webapps/element/
+  echo "${pkgver}" > "${pkgdir}"/usr/share/webapps/element/version
+}
+
+package_eledrone-desktop() {
+  pkgdesc+="desktop client."
+  depends=("eledrone-web=${pkgver}" ${_electron} libsecret)
+  # libpulse provides pactl, which the Linux screen-share audio routing shells out to.
+  optdepends=('libpulse: desktop audio in screen shares')
+  provides=(element-desktop)
+  conflicts=(element-desktop element-desktop-git)
+  backup=("etc/element/config.json")
+
+  cd "$(_pkgdir)/apps/desktop"
+
+  install -d "${pkgdir}"{/usr/lib/element/,/etc/webapps/element}
+
+  # Install the app content, replace the webapp with a symlink to the system package
+  cp -r dist/linux-unpacked/resources/* "${pkgdir}"/usr/lib/element/
+  ln -s /usr/share/webapps/element "${pkgdir}"/usr/lib/element/webapp
+
+  # Config file
+  ln -s /etc/element/config.json "${pkgdir}"/etc/webapps/element/config.json
+  install -Dm644 element.io/release/config.json -t "${pkgdir}"/etc/element
+
+  # Launcher and desktop entry
+  install -Dm755 ../../packaging/arch/element-desktop.sh "${pkgdir}"/usr/bin/element-desktop
+  install -Dm644 ../../packaging/arch/io.element.Element.desktop -t "${pkgdir}"/usr/share/applications/
+
+  # Optional helper: share a single application's audio instead of everything.
+  install -Dm755 ../../packaging/arch/element-share-audio.sh "${pkgdir}"/usr/bin/element-share-audio
+
+  # Icons
+  install -Dm644 ../web/res/themes/element/img/logos/element-logo.svg "${pkgdir}"/usr/share/icons/hicolor/scalable/apps/io.element.Element.svg
+}
