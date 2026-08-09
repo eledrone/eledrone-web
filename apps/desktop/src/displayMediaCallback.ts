@@ -10,11 +10,20 @@ import type { Streams } from "electron";
 type DisplayMediaCallback = (streams: Streams) => void;
 
 let displayMediaCallback: DisplayMediaCallback | null;
+// Whether the pending request asked for audio. The callback is invoked later, from the IPC handler
+// that receives the source the user picked, by which point the original request object is long gone -
+// so the flag has to be carried alongside the callback.
+let displayMediaAudioRequested = false;
 
 export const getDisplayMediaCallback = (): DisplayMediaCallback | null => {
     return displayMediaCallback;
 };
 
-export const setDisplayMediaCallback = (callback: DisplayMediaCallback | null): void => {
+export const isDisplayMediaAudioRequested = (): boolean => {
+    return displayMediaAudioRequested;
+};
+
+export const setDisplayMediaCallback = (callback: DisplayMediaCallback | null, audioRequested = false): void => {
     displayMediaCallback = callback;
+    displayMediaAudioRequested = audioRequested;
 };
