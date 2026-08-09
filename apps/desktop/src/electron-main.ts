@@ -39,7 +39,11 @@ import * as updater from "./updater.js";
 import ProtocolHandler from "./protocol.js";
 import { _t, AppLocalization } from "./language-helper.js";
 import { setDisplayMediaCallback } from "./displayMediaCallback.js";
-import { setupScreenshareAudio } from "./screenshareAudio.js";
+import {
+    prepareScreenshareAudio,
+    setupScreenshareAudio,
+    teardownScreenshareAudio,
+} from "./screenshareAudio.js";
 import { setupMacosTitleBar } from "./macos-titlebar.js";
 import { setupMediaAuth } from "./media-auth.js";
 import { type RendererRecovery, setupRendererRecovery } from "./renderer-recovery.js";
@@ -392,12 +396,15 @@ app.on("ready", async () => {
 
     session.defaultSession.setDisplayMediaRequestHandler(
         (request, callback) => {
+            // On Linux the desktop audio has to be routed into a capture source before the page's
+            // getDisplayMedia resolves, otherwise the renderer has nothing to attach. No-op elsewhere.
+            const audioReady = request.audioRequested ? prepareScreenshareAudio() : Promise.resolve();
+
             if (process.env.XDG_SESSION_TYPE === "wayland") {
                 // On Wayland, calling getSources() opens the xdg-desktop-portal picker.
                 // The user can only select a single source there, so Electron will return an array with exactly one entry.
-                desktopCapturer
-                    .getSources({ types: ["screen", "window"] })
-                    .then((sources) => {
+                Promise.all([desktopCapturer.getSources({ types: ["screen", "window"] }), audioReady])
+                    .then(([sources]) => {
                         // oxlint-disable-next-line promise/no-callback-in-promise
                         callback({ video: sources[0] });
                     })
@@ -408,7 +415,9 @@ app.on("ready", async () => {
                         callback({ video: { id: "", name: "" } }); // The promise does not return if no dummy is passed here as source
                     });
             } else {
-                global.mainWindow?.webContents.send("openDesktopCapturerSourcePicker");
+                void audioReady.finally(() => {
+                    global.mainWindow?.webContents.send("openDesktopCapturerSourcePicker");
+                });
             }
             setDisplayMediaCallback(callback, request.audioRequested);
         },
@@ -434,6 +443,11 @@ app.on("activate", () => {
 function beforeQuit(): void {
     global.appQuitting = true;
     global.mainWindow?.webContents.send("before-quit");
+    // If we quit mid-share the user's audio would stay routed into a sink they cannot hear, so
+    // undo it here as well as when the share ends. A no-op when nothing is set up.
+    void teardownScreenshareAudio().catch((err) => {
+        console.error("Failed to tear down screenshare audio routing:", err);
+    });
 }
 
 app.on("before-quit", beforeQuit);
