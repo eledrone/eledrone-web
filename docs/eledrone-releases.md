@@ -49,8 +49,8 @@ Two rules for choosing the number:
   suffixes break MSI generation, which requires a purely numeric version.
 - **Only ever go up.** The base version in `apps/desktop/package.json` is
   inherited from upstream Element (currently `1.12.25`), and Squirrel decides
-  whether an installed app should upgrade by comparing versions. Tag `v1.12.26`
-  or higher; a lower number will not be offered as an upgrade to anyone already
+  whether an installed app should upgrade by comparing versions. Use `1.12.26` or
+  higher; a lower number will not be offered as an upgrade to anyone already
   running a newer build.
 
 Development builds carry the same `package.json` version as the release will, so
@@ -99,6 +99,48 @@ disabled as they only matter when changing those components. Element's own
 `build_desktop_*` workflows are disabled too: superseded by this one, and
 dependent on Element's signing and publishing setup.
 
-`tests.yml` and `static_analysis.yaml` currently **fail** on this fork. They are
-kept for being useful rather than for passing, and want investigation — a
-permanently red check provides no signal.
+## Regenerating snapshots and running the format check
+
+**Do these on Linux, not Windows.** Three checks in this repo produce
+platform-dependent output, so running them in the wrong place produces confident
+nonsense and, if committed, breaks CI:
+
+| Check                        | Varies by    | Symptom of running it on Windows                                                |
+| ---------------------------- | ------------ | ------------------------------------------------------------------------------- |
+| `pnpm lint:fmt`              | line endings | reports **every** file as misformatted (CRLF vs LF)                             |
+| jest / vitest snapshots      | file path    | rewrites CSS module class hashes, e.g. `_flex_4dswl_9` becomes `_flex_190os_17` |
+| `DateUtils` inline snapshots | timezone     | rewrites times to local, e.g. `"19:10"` becomes `"17:10"`                       |
+
+The CSS module hashes derive from the file path, and Windows uses backslashes.
+Regenerating snapshots there rewrites files that were already correct — the diff
+looks plausible and CI then fails on the same files it previously passed.
+
+So, to update snapshots:
+
+```bash
+# on a linux checkout, in apps/web
+TZ=UTC pnpm test --ci -u        # jest
+TZ=UTC pnpm test:unit -u        # vitest
+```
+
+`TZ=UTC` matches the runner. Without it, `vitest -u` rewrites the date inline
+snapshots in `DateUtils.test.ts` to whatever timezone the machine is in.
+
+Afterwards, read the diff before committing. It should contain only what you
+expected to change; class name hashes or times moving is a sign the environment
+differs from CI, not that the snapshots were stale.
+
+Note the desktop tests need Electron downloaded (`node_modules/electron`), which
+a `--frozen-lockfile` install on a machine that skipped postinstall may not have.
+They fail to load entirely if it is missing.
+
+## Brand name in tests
+
+The brand is configurable and rendered into user-visible strings, so tests that
+assert those strings hardcode whatever the configured brand is. After changing
+`brand`, expect failures in roughly 110 snapshots plus a dozen explicit
+assertions — the pusher payload, OAuth dynamic client registration name, device
+display name, browser support toast, and several error dialogs.
+
+Tests that pass a brand in as explicit config or a mock are unaffected: they
+exercise whatever they are given rather than the configured default.
