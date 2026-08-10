@@ -1,8 +1,8 @@
 {
-    "name": "Element",
-    "short_name": "Element",
+    "name": "Eledrone",
+    "short_name": "Eledrone",
     "display": "standalone",
-    "theme_color": "#76CFA6",
+    "theme_color": "#e2a9f1",
     "start_url": "index.html",
     "icons": [
         {

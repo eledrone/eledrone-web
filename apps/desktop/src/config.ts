@@ -32,7 +32,7 @@ function loadLocalConfigFile(location: string | undefined): JsonDocument {
 }
 
 const DEFAULTS = {
-    brand: "Element",
+    brand: "Eledrone",
     help_url: "https://element.io/help",
     web_base_url: "https://app.element.io/",
 } satisfies DesktopConfigJson;

@@ -1,9 +1,9 @@
 {
-    "appId": "im.riot.nightly",
-    "name": "element-desktop-nightly",
-    "productName": "Element Nightly",
-    "description": "Element: the future of secure communication (nightly unstable build)",
+    "appId": "io.eledrone.nightly",
+    "name": "eledrone-desktop-nightly",
+    "productName": "Eledrone Nightly",
+    "description": "Eledrone: secure communication with screen-share audio (nightly unstable build)",
     "protocols": ["io.element.nightly", "element"],
-    "linux.executableName": "element-desktop-nightly",
-    "linux.deb.name": "element-nightly"
+    "linux.executableName": "eledrone-desktop-nightly",
+    "linux.deb.name": "eledrone-nightly"
 }

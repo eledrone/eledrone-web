@@ -17,7 +17,7 @@ import ElementDesktopLogoSvg from "../res/img/element-desktop-logo.svg";
 
 // see element-web config.md for docs, or the IConfigOptions interface for dev docs
 export const DEFAULTS = {
-    brand: "Element",
+    brand: "Eledrone",
     branding: {
         logo_link_url: "https://element.io",
         auth_header_logo_url: "themes/element/img/logos/element-logo.svg",

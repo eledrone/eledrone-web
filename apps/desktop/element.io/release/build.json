@@ -1,7 +1,7 @@
 {
-    "appId": "im.riot.app",
-    "name": "element-desktop",
-    "productName": "Element",
-    "description": "Element: the future of secure communication",
+    "appId": "io.eledrone.app",
+    "name": "eledrone-desktop",
+    "productName": "Eledrone",
+    "description": "Eledrone: secure communication with screen-share audio",
     "protocols": ["io.element.desktop", "element"]
 }
