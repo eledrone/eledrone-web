@@ -16,6 +16,13 @@ import type ProtocolHandler from "./protocol.js";
 const defaultUserDataDir = app.getPath("userData");
 
 /**
+ * Names this app's user data directory has used in the past, newest first.
+ * The directory is derived from the product name, so renaming the app would otherwise
+ * strand the existing profile: `Element` predates the eledrone rebrand, `Riot` predates that.
+ */
+const legacyAppNames = ["Element", "Riot"];
+
+/**
  * Calculates the command line arguments to include in the protocol registration,
  * some parameters, e.g. '--hidden' are omitted as it'd cause the app to not be focused.
  * Excludes all positional arguments as those are only relevant once, e.g. for OIDC auth callbacks.
@@ -100,18 +107,23 @@ function getUserDataPath(argv: ParsedArgs, protocolHandler: ProtocolHandler): st
     }
 
     const newUserDataPathExists = isRealUserDataDir(newUserDataPath);
-    let oldUserDataPath = path.join(app.getPath("appData"), app.getName().replace("Element", "Riot"));
-    if (argv["profile"]) {
-        oldUserDataPath += "-" + argv["profile"];
-    }
-
-    const oldUserDataPathExists = isRealUserDataDir(oldUserDataPath);
     console.log(`${newUserDataPath} exists: ${newUserDataPathExists ? "yes" : "no"}`);
-    console.log(`${oldUserDataPath} exists: ${oldUserDataPathExists ? "yes" : "no"}`);
 
-    if (!newUserDataPathExists && oldUserDataPathExists) {
-        console.log(`Using legacy user data path: ${oldUserDataPath}`);
-        return oldUserDataPath;
+    if (!newUserDataPathExists) {
+        for (const appName of legacyAppNames) {
+            let oldUserDataPath = path.join(app.getPath("appData"), appName);
+            if (argv["profile"]) {
+                oldUserDataPath += "-" + argv["profile"];
+            }
+
+            const oldUserDataPathExists = isRealUserDataDir(oldUserDataPath);
+            console.log(`${oldUserDataPath} exists: ${oldUserDataPathExists ? "yes" : "no"}`);
+
+            if (oldUserDataPathExists) {
+                console.log(`Using legacy user data path: ${oldUserDataPath}`);
+                return oldUserDataPath;
+            }
+        }
     }
     return newUserDataPath;
 }

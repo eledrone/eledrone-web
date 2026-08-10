@@ -53,7 +53,7 @@ describe("loadConfig", () => {
 
     it("should ignore localConfigPath if does not exist", async () => {
         const config = await loadConfig("/invalid-path/custom-config.json");
-        expect(config.brand).toBe("Element");
+        expect(config.brand).toBe("Eledrone");
         expect(config.web_base_url).toBe("https://chat.org.com");
         expect(config.default_hs_url).toBe("https://matrix.org.com");
     });
@@ -146,8 +146,8 @@ describe("loadConfig", () => {
         expect(dialog.showMessageBox).toHaveBeenCalledWith({
             detail: "Unexpected token 'N', \"NOT_JSON\" is not valid JSON",
             message:
-                "Your custom Element configuration contains invalid JSON. Please correct the problem and reopen Element.",
-            title: "Your Element is misconfigured",
+                "Your custom Eledrone configuration contains invalid JSON. Please correct the problem and reopen Eledrone.",
+            title: "Your Eledrone is misconfigured",
             type: "error",
         });
     });

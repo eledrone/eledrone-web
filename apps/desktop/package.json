@@ -1,10 +1,10 @@
 {
     "name": "element-desktop",
-    "productName": "Element",
+    "productName": "Eledrone",
     "main": "lib/electron-main.js",
     "exports": "./lib/electron-main.js",
     "version": "1.12.25",
-    "description": "Element: the future of secure communication",
+    "description": "Eledrone: secure communication with screen-share audio",
     "author": {
         "name": "Element",
         "email": "support@element.io"

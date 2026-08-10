@@ -1,10 +1,10 @@
 [Desktop Entry]
-Name=Element
+Name=Eledrone
 Comment=Feature-rich client for Matrix
 Exec=/usr/bin/element-desktop %u
 Terminal=false
 Type=Application
 Icon=io.element.Element
-StartupWMClass=Element
+StartupWMClass=Eledrone
 Categories=Network;InstantMessaging;Chat;IRCClient
 MimeType=x-scheme-handler/element;

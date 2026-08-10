@@ -5,8 +5,8 @@
             "layers": [
                 {
                     "glass": false,
-                    "image-name": "element.png",
-                    "name": "element"
+                    "image-name": "eledrone.png",
+                    "name": "eledrone"
                 }
             ],
             "name": "Figma",
