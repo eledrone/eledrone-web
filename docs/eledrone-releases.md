@@ -9,33 +9,39 @@ secrets.
 | Trigger | Result |
 |---|---|
 | push to `develop` | both platforms built, artifacts attached to the run (14 days) |
-| push an `eledrone-v*` tag | both platforms built, a GitHub Release is created |
+| push to `main` | both platforms built **and** a GitHub Release published |
 | Actions → Run workflow | both platforms built on demand |
 
 Artifacts from a `develop` build are **not** a Release — they live on the run page
-under *Artifacts* and expire. Only a tag produces something in the Releases
-section of the repository.
+under *Artifacts* and expire after 14 days. Only `main` populates the Releases
+section, where downloads are permanent.
 
 Development builds are downloaded from the run's **Artifacts** section. Releases
 appear under **Releases** with the installers attached.
 
 ## Cutting a release
 
-Versions come from the tag, so the tag is the single source of truth:
+The version lives in `apps/desktop/package.json`. Releasing is: bump it on
+`develop`, then merge `develop` into `main`.
 
 ```bash
-git tag eledrone-v1.12.26
-git push origin eledrone-v1.12.26
+# on develop
+npm --prefix apps/desktop version 1.12.26 --no-git-tag-version
+git commit -am "release: 1.12.26" && git push
+
+# then release it
+git checkout main && git merge --ff-only develop && git push
 ```
 
-`electron-builder.ts` reads `$VERSION`, which the workflow sets from the tag with
-the `eledrone-v` prefix stripped. Nothing needs committing to bump a version.
+The push to `main` builds both platforms and publishes **eledrone v1.12.26**,
+tagging the commit `eledrone-v1.12.26`. Nothing is tagged by hand.
 
-**The `eledrone-v` prefix is required, not cosmetic.** This fork inherits every
-upstream element-web tag — about 670 of them — and syncing upstream pushes more.
-A bare `v*` trigger would fire a build and publish a release for every upstream
-tag that arrives, and would eventually collide with an upstream version of the
-same number.
+If that version was already released the release step stops with a warning
+rather than duplicating it — bump the version and push `main` again.
+
+**Why the tag is prefixed:** this fork inherits every upstream element-web tag —
+about 670 — and syncing upstream brings more. An unprefixed `v1.12.26` would
+eventually collide with a genuine Element release of the same number.
 
 Two rules for choosing the number:
 
@@ -47,9 +53,8 @@ Two rules for choosing the number:
   or higher; a lower number will not be offered as an upgrade to anyone already
   running a newer build.
 
-Builds from `develop` deliberately do **not** override the version — they carry
-the `package.json` version so that MSI generation keeps working. Tell development
-builds apart by the run number and commit in the artifact name, not the version.
+Development builds carry the same `package.json` version as the release will, so
+tell them apart by the run number and commit, not the version.
 
 ## What these builds do not include
 
@@ -74,7 +79,24 @@ Element's branding and none of this fork's changes.
 
 ## Inherited Element workflows
 
-The fork carries ~40 workflows from element-web, 15 of which trigger on a push to
-`develop`. They expect Element's secrets (Netlify, Localazy, Docker Hub, npm) and
-will fail. They are harmless but noisy; disable the unwanted ones individually
-under Actions, or delete the workflow files.
+The fork came with ~40 workflows from element-web. Most expect Element's own
+infrastructure — Netlify, Localazy, Docker Hub, npm, their release automation and
+issue triage — and fail here. They have been moved to
+`.github/workflows-disabled/`, which stops GitHub running them while keeping the
+files for reference. Move one back into `.github/workflows/` to re-enable it.
+
+Still active:
+
+| Workflow | Why |
+|---|---|
+| `eledrone-desktop.yml` | this one |
+| `build.yml` | builds the web app |
+| `tests.yml` | unit tests |
+| `static_analysis.yaml` | lint and types |
+| `shared-component-visual-tests.yaml` | component snapshots |
+
+`tests.yml` and `static_analysis.yaml` currently **fail** on this fork and need
+looking at; they were kept because they are genuinely useful, not because they
+pass. Element's own desktop build workflows (`build_desktop_*`) are disabled —
+they are superseded by this one and depend on Element's signing and publishing
+setup.

@@ -3,14 +3,17 @@ name: eledrone desktop
 # Builds the desktop app for Windows and Linux, and publishes a GitHub Release
 # when a v* tag is pushed.
 #
-#   push to develop            -> builds both platforms, artifacts kept 14 days
-#   push tag eledrone-v1.12.26 -> builds both, creates a GitHub Release
-#   manual dispatch            -> builds both platforms
+#   push to develop -> builds both platforms, artifacts kept 14 days
+#   push to main    -> builds both platforms AND publishes a GitHub Release
+#   manual dispatch -> builds both platforms
 #
-# Releases are tagged "eledrone-v*", not "v*". This fork inherits every upstream
-# element-web tag (~670 of them) and syncing upstream pushes new ones, so a "v*"
-# trigger would both collide with upstream versions and fire a build and release
-# for every upstream tag that arrives.
+# The released version comes from apps/desktop/package.json, and the release is
+# tagged "eledrone-v<version>". Bump that version before merging into main; if a
+# release for it already exists the release step stops rather than duplicating.
+#
+# The tag is prefixed rather than a bare "v" because this fork inherits every
+# upstream element-web tag (~670) and syncing upstream pushes more, which would
+# otherwise collide with our versions.
 #
 # Deliberately independent of Element's own workflows: no code signing, no
 # packages.element.io, no Netlify/Localazy, no secrets at all.
@@ -24,8 +27,7 @@ name: eledrone desktop
 
 on:
   push:
-    branches: [develop]
-    tags: ["eledrone-v*"]
+    branches: [develop, main]
   workflow_dispatch:
 
 concurrency:
@@ -75,15 +77,10 @@ jobs:
         id: version
         shell: bash
         run: |
-          # Tags drive the released version; other builds keep the version in
-          # package.json, because prerelease suffixes break MSI generation.
-          if [ "$GITHUB_REF_TYPE" = tag ]; then
-            version="${GITHUB_REF_NAME#eledrone-v}"
-            echo "release=true" >> "$GITHUB_OUTPUT"
-          else
-            version=$(node -p "require('./apps/desktop/package.json').version")
-            echo "release=false" >> "$GITHUB_OUTPUT"
-          fi
+          # One source of truth for the version, so a develop artifact and the
+          # release built from the same commit carry the same number. Must stay
+          # plain semver: a prerelease suffix breaks MSI generation.
+          version=$(node -p "require('./apps/desktop/package.json').version")
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "building version $version"
 
@@ -102,9 +99,6 @@ jobs:
       - name: Build the desktop app
         shell: bash
         working-directory: apps/desktop
-        env:
-          # electron-builder.ts reads this and overrides the package version.
-          VERSION: ${{ steps.version.outputs.release == 'true' && steps.version.outputs.version || '' }}
         run: |
           # Extracting electron can fail with EPERM on Windows when a scanner
           # still holds the freshly written files. It succeeds on a retry.
@@ -138,19 +132,39 @@ jobs:
 
   release:
     needs: build
-    if: github.ref_type == 'tag'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Version, and has it been released already?
+        id: version
+        run: |
+          version=$(node -p "require('./apps/desktop/package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if git ls-remote --exit-code --tags origin "refs/tags/eledrone-v$version" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::eledrone-v$version is already released - bump the version in apps/desktop/package.json before merging to main"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "will release eledrone-v$version"
+          fi
+
       - uses: actions/download-artifact@v4
+        if: steps.version.outputs.exists == 'false'
         with:
           path: artifacts
           merge-multiple: true
 
-      - run: ls -lhR artifacts
+      - if: steps.version.outputs.exists == 'false'
+        run: ls -lhR artifacts
 
       - uses: softprops/action-gh-release@v2
+        if: steps.version.outputs.exists == 'false'
         with:
-          name: eledrone ${{ github.ref_name }}
+          tag_name: eledrone-v${{ steps.version.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          name: eledrone v${{ steps.version.outputs.version }}
           generate_release_notes: true
           fail_on_unmatched_files: true
           body: |
