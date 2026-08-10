@@ -47,7 +47,7 @@ exports[`<ExtensionsCard /> should render empty state 1`] = `
       </button>
     </div>
     <div
-      class="_scrollbar_nplv9_15 mx_AutoHideScrollbar"
+      class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar"
       tabindex="-1"
     >
       <button
@@ -72,7 +72,7 @@ exports[`<ExtensionsCard /> should render empty state 1`] = `
         Add extensions
       </button>
       <div
-        class="_flex_190os_17 mx_EmptyState"
+        class="_flex_4dswl_9 mx_EmptyState"
         style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: center; --mx-flex-justify: center; --mx-flex-gap: var(--cpd-space-4x); --mx-flex-wrap: nowrap;"
       >
         <svg
@@ -149,7 +149,7 @@ exports[`<ExtensionsCard /> should render widgets 1`] = `
       </button>
     </div>
     <div
-      class="_scrollbar_nplv9_15 mx_AutoHideScrollbar"
+      class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar"
       tabindex="-1"
     >
       <button

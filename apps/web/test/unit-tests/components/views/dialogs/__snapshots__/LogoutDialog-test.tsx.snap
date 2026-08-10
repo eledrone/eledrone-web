@@ -48,7 +48,7 @@ exports[`LogoutDialog Prompts user to set up recovery if there is a backup on th
         </h2>
       </div>
       <div
-        class="_flex_190os_17 mx_EncryptionCard_emphasisedContent"
+        class="_flex_4dswl_9 mx_EncryptionCard_emphasisedContent"
         style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: normal; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-3x); --mx-flex-wrap: nowrap;"
       >
         <p
@@ -201,7 +201,7 @@ exports[`LogoutDialog Prompts user to set up recovery if there is no backup on t
         </h2>
       </div>
       <div
-        class="_flex_190os_17 mx_EncryptionCard_emphasisedContent"
+        class="_flex_4dswl_9 mx_EncryptionCard_emphasisedContent"
         style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: normal; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-3x); --mx-flex-wrap: nowrap;"
       >
         <p
@@ -354,7 +354,7 @@ exports[`LogoutDialog Prompts user to set up recovery if there is no backup on t
         </h2>
       </div>
       <div
-        class="_flex_190os_17 mx_EncryptionCard_emphasisedContent"
+        class="_flex_4dswl_9 mx_EncryptionCard_emphasisedContent"
         style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: normal; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-3x); --mx-flex-wrap: nowrap;"
       >
         <p

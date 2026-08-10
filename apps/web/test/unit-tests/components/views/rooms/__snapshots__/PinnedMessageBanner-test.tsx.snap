@@ -40,7 +40,7 @@ exports[`<PinnedMessageBanner /> should display display a poll event 1`] = `
           />
         </svg>
         <span
-          class="mx_EventPreview _eventPreview_wqvi9_15 mx_PinnedMessageBanner_message"
+          class="mx_EventPreview _eventPreview_w0s50_8 mx_PinnedMessageBanner_message"
           data-testid="banner-message"
         >
           <span>
@@ -117,7 +117,7 @@ exports[`<PinnedMessageBanner /> should display the last message when the pinned
           </span>
         </div>
         <span
-          class="mx_EventPreview _eventPreview_wqvi9_15 mx_PinnedMessageBanner_message"
+          class="mx_EventPreview _eventPreview_w0s50_8 mx_PinnedMessageBanner_message"
           data-testid="banner-message"
         >
           Third pinned message
@@ -177,7 +177,7 @@ exports[`<PinnedMessageBanner /> should display the m.audio event type 1`] = `
           />
         </svg>
         <span
-          class="mx_EventPreview _eventPreview_wqvi9_15 mx_PinnedMessageBanner_message"
+          class="mx_EventPreview _eventPreview_w0s50_8 mx_PinnedMessageBanner_message"
           data-testid="banner-message"
         >
           <span>
@@ -233,7 +233,7 @@ exports[`<PinnedMessageBanner /> should display the m.file event type 1`] = `
           />
         </svg>
         <span
-          class="mx_EventPreview _eventPreview_wqvi9_15 mx_PinnedMessageBanner_message"
+          class="mx_EventPreview _eventPreview_w0s50_8 mx_PinnedMessageBanner_message"
           data-testid="banner-message"
         >
           <span>
@@ -289,7 +289,7 @@ exports[`<PinnedMessageBanner /> should display the m.image event type 1`] = `
           />
         </svg>
         <span
-          class="mx_EventPreview _eventPreview_wqvi9_15 mx_PinnedMessageBanner_message"
+          class="mx_EventPreview _eventPreview_w0s50_8 mx_PinnedMessageBanner_message"
           data-testid="banner-message"
         >
           <span>
@@ -345,7 +345,7 @@ exports[`<PinnedMessageBanner /> should display the m.video event type 1`] = `
           />
         </svg>
         <span
-          class="mx_EventPreview _eventPreview_wqvi9_15 mx_PinnedMessageBanner_message"
+          class="mx_EventPreview _eventPreview_w0s50_8 mx_PinnedMessageBanner_message"
           data-testid="banner-message"
         >
           <span>
@@ -418,7 +418,7 @@ exports[`<PinnedMessageBanner /> should render 2 pinned event 1`] = `
           </span>
         </div>
         <span
-          class="mx_EventPreview _eventPreview_wqvi9_15 mx_PinnedMessageBanner_message"
+          class="mx_EventPreview _eventPreview_w0s50_8 mx_PinnedMessageBanner_message"
           data-testid="banner-message"
         >
           Second pinned message
@@ -499,7 +499,7 @@ exports[`<PinnedMessageBanner /> should render 4 pinned event 1`] = `
           </span>
         </div>
         <span
-          class="mx_EventPreview _eventPreview_wqvi9_15 mx_PinnedMessageBanner_message"
+          class="mx_EventPreview _eventPreview_w0s50_8 mx_PinnedMessageBanner_message"
           data-testid="banner-message"
         >
           Fourth pinned message
@@ -559,7 +559,7 @@ exports[`<PinnedMessageBanner /> should render a single pinned event 1`] = `
           />
         </svg>
         <span
-          class="mx_EventPreview _eventPreview_wqvi9_15 mx_PinnedMessageBanner_message"
+          class="mx_EventPreview _eventPreview_w0s50_8 mx_PinnedMessageBanner_message"
           data-testid="banner-message"
         >
           First pinned message

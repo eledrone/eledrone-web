@@ -27,7 +27,7 @@ exports[`<RoomAvatarView /> should not render a decoration 1`] = `
 exports[`<RoomAvatarView /> should render a low priority room decoration 1`] = `
 <DocumentFragment>
   <div
-    class="_flex_190os_17 mx_RoomAvatarView"
+    class="_flex_4dswl_9 mx_RoomAvatarView"
     style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: start; --mx-flex-justify: start; --mx-flex-gap: 0; --mx-flex-wrap: nowrap;"
   >
     <span
@@ -71,7 +71,7 @@ exports[`<RoomAvatarView /> should render a low priority room decoration 1`] = `
 exports[`<RoomAvatarView /> should render a public room decoration 1`] = `
 <DocumentFragment>
   <div
-    class="_flex_190os_17 mx_RoomAvatarView"
+    class="_flex_4dswl_9 mx_RoomAvatarView"
     style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: start; --mx-flex-justify: start; --mx-flex-gap: 0; --mx-flex-wrap: nowrap;"
   >
     <span
@@ -115,7 +115,7 @@ exports[`<RoomAvatarView /> should render a public room decoration 1`] = `
 exports[`<RoomAvatarView /> should render a video room decoration 1`] = `
 <DocumentFragment>
   <div
-    class="_flex_190os_17 mx_RoomAvatarView"
+    class="_flex_4dswl_9 mx_RoomAvatarView"
     style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: start; --mx-flex-justify: start; --mx-flex-gap: 0; --mx-flex-wrap: nowrap;"
   >
     <span
@@ -159,7 +159,7 @@ exports[`<RoomAvatarView /> should render a video room decoration 1`] = `
 exports[`<RoomAvatarView /> should render the busy presence 1`] = `
 <DocumentFragment>
   <div
-    class="_flex_190os_17 mx_RoomAvatarView"
+    class="_flex_4dswl_9 mx_RoomAvatarView"
     style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: start; --mx-flex-justify: start; --mx-flex-gap: 0; --mx-flex-wrap: nowrap;"
   >
     <span
@@ -218,7 +218,7 @@ exports[`<RoomAvatarView /> should render the busy presence 1`] = `
 exports[`<RoomAvatarView /> should render the offline presence 1`] = `
 <DocumentFragment>
   <div
-    class="_flex_190os_17 mx_RoomAvatarView"
+    class="_flex_4dswl_9 mx_RoomAvatarView"
     style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: start; --mx-flex-justify: start; --mx-flex-gap: 0; --mx-flex-wrap: nowrap;"
   >
     <span
@@ -277,7 +277,7 @@ exports[`<RoomAvatarView /> should render the offline presence 1`] = `
 exports[`<RoomAvatarView /> should render the online presence 1`] = `
 <DocumentFragment>
   <div
-    class="_flex_190os_17 mx_RoomAvatarView"
+    class="_flex_4dswl_9 mx_RoomAvatarView"
     style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: start; --mx-flex-justify: start; --mx-flex-gap: 0; --mx-flex-wrap: nowrap;"
   >
     <span
@@ -334,7 +334,7 @@ exports[`<RoomAvatarView /> should render the online presence 1`] = `
 exports[`<RoomAvatarView /> should render the unavailable presence 1`] = `
 <DocumentFragment>
   <div
-    class="_flex_190os_17 mx_RoomAvatarView"
+    class="_flex_4dswl_9 mx_RoomAvatarView"
     style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: start; --mx-flex-justify: start; --mx-flex-gap: 0; --mx-flex-wrap: nowrap;"
   >
     <span
