@@ -99,40 +99,40 @@ disabled as they only matter when changing those components. Element's own
 `build_desktop_*` workflows are disabled too: superseded by this one, and
 dependent on Element's signing and publishing setup.
 
-## Regenerating snapshots and running the format check
-
-**Do these on Linux, not Windows.** Three checks in this repo produce
-platform-dependent output, so running them in the wrong place produces confident
-nonsense and, if committed, breaks CI:
-
-| Check                        | Varies by    | Symptom of running it on Windows                                                |
-| ---------------------------- | ------------ | ------------------------------------------------------------------------------- |
-| `pnpm lint:fmt`              | line endings | reports **every** file as misformatted (CRLF vs LF)                             |
-| jest / vitest snapshots      | file path    | rewrites CSS module class hashes, e.g. `_flex_4dswl_9` becomes `_flex_190os_17` |
-| `DateUtils` inline snapshots | timezone     | rewrites times to local, e.g. `"19:10"` becomes `"17:10"`                       |
-
-The CSS module hashes derive from the file path, and Windows uses backslashes.
-Regenerating snapshots there rewrites files that were already correct — the diff
-looks plausible and CI then fails on the same files it previously passed.
-
-So, to update snapshots:
+## Regenerating snapshots
 
 ```bash
-# on a linux checkout, in apps/web
-TZ=UTC pnpm test --ci -u        # jest
-TZ=UTC pnpm test:unit -u        # vitest
+pnpm test:snapshots:update      # both runners, from either platform
 ```
 
-`TZ=UTC` matches the runner. Without it, `vitest -u` rewrites the date inline
-snapshots in `DateUtils.test.ts` to whatever timezone the machine is in.
+This works the same on Windows and Linux. It did not always: snapshots used to
+embed two machine-specific values, so regenerating them anywhere other than
+Linux broke CI.
 
-Afterwards, read the diff before committing. It should contain only what you
-expected to change; class name hashes or times moving is a sign the environment
-differs from CI, not that the snapshots were stale.
+- **CSS module class names** were hashed from the _absolute_ file path, so
+  `apps\web\...` and `apps/web/...` produced different names — and those names
+  are baked into the shared-components bundle that consumers' snapshots record.
+  `packages/shared-components/vite.config.ts` now hashes a repository-relative
+  path with forward slashes. Verified by building the same commit on both
+  platforms: identical bundle, all 312 class names byte for byte.
+- **Formatted dates** followed the machine timezone. Both runners now pin
+  `TZ=UTC` in their own config rather than relying on the caller.
 
-Note the desktop tests need Electron downloaded (`node_modules/electron`), which
-a `--frozen-lockfile` install on a machine that skipped postinstall may not have.
-They fail to load entirely if it is missing.
+Two things still differ locally and are worth knowing:
+
+- `pnpm lint:fmt` on Windows reports **every** file as misformatted, because the
+  working tree is CRLF and oxfmt expects LF. That is the check misreading your
+  checkout, not something committed — ignore it locally and trust CI.
+- Some `Intl` tests assert English output, so on a non-English machine they fail
+  with e.g. `expected 'сьогодні' to be 'today'`. Run with `LC_ALL=C.UTF-8`.
+
+Read the diff before committing a regeneration. It should contain only what you
+expected to change; if class names or times move, something about the
+environment still differs from CI:
+
+```bash
+git diff -U0 | grep -E "^[+-]" | grep -v "^[+-][+-]" | grep -viE "<what you changed>"
+```
 
 ## Brand name in tests
 
