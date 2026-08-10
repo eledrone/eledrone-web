@@ -14,6 +14,12 @@ import type { Config } from "jest";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Pin the timezone so date formatting does not depend on the machine running the
+// tests. Several assertions and inline snapshots contain formatted times, and CI
+// runs in UTC - without this, updating snapshots anywhere else rewrites them to
+// local time and they then fail on CI.
+env.TZ = "UTC";
+
 const config: Config = {
     testEnvironment: "jest-fixed-jsdom",
     testEnvironmentOptions: {

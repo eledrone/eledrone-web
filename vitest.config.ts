@@ -38,12 +38,20 @@ if (env["GITHUB_ACTIONS"] !== undefined) {
     }
 }
 
+// Pin the timezone so date formatting does not depend on the machine running the
+// tests. CI runs in UTC; without this, updating inline snapshots anywhere else
+// rewrites the formatted times to local time and they then fail on CI.
+env.TZ = "UTC";
+
 export default defineConfig({
     oxc: {
         // Configure the ts loader to handle all the files we may throw at it
         include: /\.[cm]?tsx?$/,
     },
     test: {
+        env: {
+            TZ: "UTC",
+        },
         projects: [
             "{apps,modules,packages}/*/vitest.config.ts",
             // We run shared-components separately for now as vitest lacks support for nested projects

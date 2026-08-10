@@ -7,11 +7,32 @@
  */
 
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { defineConfig, esmExternalRequirePlugin, type Plugin } from "vite";
 import dts from "unplugin-dts/vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
+
+const packageRoot = path.dirname(fileURLToPath(import.meta.url));
+
+/**
+ * Build a CSS module class name that does not depend on the machine doing the build.
+ *
+ * The default scoped name is derived from the absolute file path, so Windows and Linux
+ * produce different class names for identical source. Those names are baked into the
+ * published bundle and therefore appear in consumers' test snapshots, which then only
+ * match on the platform that built the package.
+ *
+ * Hashing the repository-relative path with forward slashes makes the output identical
+ * everywhere. The file contents are deliberately not hashed: including them would change
+ * every class name in a file whenever any rule in it is edited.
+ */
+function generateScopedName(name: string, filename: string): string {
+    const relative = path.relative(packageRoot, filename).split(path.sep).join("/");
+    const hash = createHash("sha256").update(relative).digest("hex").slice(0, 8);
+    return `_${name}_${hash}`;
+}
 
 const cssLayerOrder = "@layer compound-tokens, compound-web, shared-components, app-web;";
 const sharedComponentsLayer = "shared-components";
@@ -46,6 +67,11 @@ function layerCssAssets(): Plugin {
 }
 
 export default defineConfig({
+    css: {
+        modules: {
+            generateScopedName,
+        },
+    },
     build: {
         lib: {
             // Two entries: the main bundle and a standalone `numbers` utility that callers
