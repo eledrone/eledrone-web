@@ -39,11 +39,7 @@ import * as updater from "./updater.js";
 import ProtocolHandler from "./protocol.js";
 import { _t, AppLocalization } from "./language-helper.js";
 import { setDisplayMediaCallback } from "./displayMediaCallback.js";
-import {
-    prepareScreenshareAudio,
-    setupScreenshareAudio,
-    teardownScreenshareAudio,
-} from "./screenshareAudio.js";
+import { prepareScreenshareAudio, setupScreenshareAudio, teardownScreenshareAudio } from "./screenshareAudio.js";
 import { setupMacosTitleBar } from "./macos-titlebar.js";
 import { setupMediaAuth } from "./media-auth.js";
 import { type RendererRecovery, setupRendererRecovery } from "./renderer-recovery.js";

@@ -5,8 +5,8 @@ carrying local changes on top of upstream.
 
 ## Layout
 
-| Ref | Purpose |
-|---|---|
+| Ref       | Purpose                                                                                |
+| --------- | -------------------------------------------------------------------------------------- |
 | `develop` | **the trunk** — upstream plus every local change; this is what gets built and released |
 
 All work lands on `develop`, matching the branch name upstream develops on. Upstream is merged into
@@ -20,10 +20,10 @@ fast-forwarding.
 
 ## Local changes
 
-| Area | Files | Why |
-|---|---|---|
+| Area               | Files                                                                                           | Why                                                                                                          |
+| ------------------ | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | Screen-share audio | `apps/desktop/src/screenshareAudio.ts`, `ipc.ts`, `electron-main.ts`, `displayMediaCallback.ts` | Upstream discards the `audio` field of every display-media request. See element-call#3657, element-web#29891 |
-| Arch packaging | `packaging/arch/` | Builds this fork directly |
+| Arch packaging     | `packaging/arch/`                                                                               | Builds this fork directly                                                                                    |
 
 ## Syncing with upstream
 
@@ -54,19 +54,23 @@ change wraps its callback. If that handler is restructured upstream, re-apply by
 ## Building
 
 **Arch:**
+
 ```bash
 cd packaging/arch && makepkg -si
 ```
+
 Builds `eledrone-web` and `eledrone-desktop`. Both are required: the desktop package ships only the
 Electron shell and symlinks its webapp from the web package.
 
 **Windows:**
+
 ```powershell
 corepack pnpm install
 cd apps/desktop
 corepack pnpm run fetch --noverify --cfgdir ""
 corepack pnpm run build
 ```
+
 Artifacts land in `apps/desktop/dist/` (unpacked directory, MSI, and Squirrel installer). Unsigned,
 so SmartScreen warns on first run. Native modules (`hak`/seshat) are skipped — that only costs
 encrypted-room search, and it logs a harmless `matrix-seshat` module-not-found on startup.
@@ -77,7 +81,7 @@ encrypted-room search, and it logs a harmless `matrix-seshat` module-not-found o
   nothing on a non-English system.
 - **`pactl get-default-sink` only exists from PulseAudio 15.** Fall back to parsing `pactl info`.
 - **Chromium never enumerates monitor sources** (`device.class = "monitor"`). Desktop audio has to be
-  exposed through a *remapped* source, which is why the routing exists at all.
+  exposed through a _remapped_ source, which is why the routing exists at all.
 - **Element's own playback must stay out of the share sink**, or remote participants hear themselves.
 - **Electron's `audio: "loopback"` is Windows-only.** Passing it elsewhere breaks screen sharing.
 - **`git describe` needs `--match "v*"`** — the repo carries tags like `module/banner/v1.0.0`.
