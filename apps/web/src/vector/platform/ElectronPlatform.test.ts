@@ -201,18 +201,18 @@ describe("ElectronPlatform", () => {
             [
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
                     "(KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
-                "Element Desktop: macOS",
+                "Eledrone Desktop: macOS",
             ],
             [
                 "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) " +
                     "electron/1.0.0 Chrome/53.0.2785.113 Electron/1.4.3 Safari/537.36",
-                "Element Desktop: Windows",
+                "Eledrone Desktop: Windows",
             ],
-            ["Mozilla/5.0 (X11; Linux i686; rv:21.0) Gecko/20100101 Firefox/21.0", "Element Desktop: Linux"],
-            ["Mozilla/5.0 (X11; FreeBSD i686; rv:21.0) Gecko/20100101 Firefox/21.0", "Element Desktop: FreeBSD"],
-            ["Mozilla/5.0 (X11; OpenBSD i686; rv:21.0) Gecko/20100101 Firefox/21.0", "Element Desktop: OpenBSD"],
-            ["Mozilla/5.0 (X11; SunOS i686; rv:21.0) Gecko/20100101 Firefox/21.0", "Element Desktop: SunOS"],
-            ["custom user agent", "Element Desktop: Unknown"],
+            ["Mozilla/5.0 (X11; Linux i686; rv:21.0) Gecko/20100101 Firefox/21.0", "Eledrone Desktop: Linux"],
+            ["Mozilla/5.0 (X11; FreeBSD i686; rv:21.0) Gecko/20100101 Firefox/21.0", "Eledrone Desktop: FreeBSD"],
+            ["Mozilla/5.0 (X11; OpenBSD i686; rv:21.0) Gecko/20100101 Firefox/21.0", "Eledrone Desktop: OpenBSD"],
+            ["Mozilla/5.0 (X11; SunOS i686; rv:21.0) Gecko/20100101 Firefox/21.0", "Eledrone Desktop: SunOS"],
+            ["custom user agent", "Eledrone Desktop: Unknown"],
         ])("%s = %s", (userAgent, result) => {
             Object.defineProperty(window, "navigator", { value: { userAgent }, writable: true });
             const platform = new ElectronPlatform();
