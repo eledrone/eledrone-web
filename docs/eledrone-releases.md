@@ -89,14 +89,16 @@ Still active:
 
 | Workflow | Why |
 |---|---|
-| `eledrone-desktop.yml` | this one |
-| `build.yml` | builds the web app |
+| `eledrone-desktop.yml` | builds and releases the desktop app |
 | `tests.yml` | unit tests |
 | `static_analysis.yaml` | lint and types |
-| `shared-component-visual-tests.yaml` | component snapshots |
 
-`tests.yml` and `static_analysis.yaml` currently **fail** on this fork and need
-looking at; they were kept because they are genuinely useful, not because they
-pass. Element's own desktop build workflows (`build_desktop_*`) are disabled —
-they are superseded by this one and depend on Element's signing and publishing
-setup.
+`build.yml` is disabled because `eledrone-desktop.yml` builds the web app itself,
+so running both did the same work twice. The shared component visual tests are
+disabled as they only matter when changing those components. Element's own
+`build_desktop_*` workflows are disabled too: superseded by this one, and
+dependent on Element's signing and publishing setup.
+
+`tests.yml` and `static_analysis.yaml` currently **fail** on this fork. They are
+kept for being useful rather than for passing, and want investigation — a
+permanently red check provides no signal.
