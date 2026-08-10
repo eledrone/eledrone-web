@@ -47,11 +47,11 @@ exports[`<PinnedMessagesCard /> should show the empty state when there are no pi
       </button>
     </div>
     <div
-      class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar"
+      class="_scrollbar_nplv9_15 mx_AutoHideScrollbar"
       tabindex="-1"
     >
       <div
-        class="_flex_4dswl_9 mx_EmptyState"
+        class="_flex_190os_17 mx_EmptyState"
         style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: center; --mx-flex-justify: center; --mx-flex-gap: var(--cpd-space-4x); --mx-flex-wrap: nowrap;"
       >
         <svg
@@ -130,7 +130,7 @@ exports[`<PinnedMessagesCard /> should show two pinned messages 1`] = `
       </button>
     </div>
     <div
-      class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar"
+      class="_scrollbar_nplv9_15 mx_AutoHideScrollbar"
       tabindex="-1"
     >
       <div
@@ -200,7 +200,7 @@ exports[`<PinnedMessagesCard /> should show two pinned messages 1`] = `
               </button>
             </div>
             <div
-              class="mx_MTextBody mx_EventTile_content _root_dlp6w_8 _text_dlp6w_13"
+              class="mx_MTextBody mx_EventTile_content _root_1qjzw_15 _text_1qjzw_25"
               id="react-use-id-3"
             >
               <div
@@ -281,7 +281,7 @@ exports[`<PinnedMessagesCard /> should show two pinned messages 1`] = `
               </button>
             </div>
             <div
-              class="mx_MTextBody mx_EventTile_content _root_dlp6w_8 _text_dlp6w_13"
+              class="mx_MTextBody mx_EventTile_content _root_1qjzw_15 _text_1qjzw_25"
               id="react-use-id-6"
             >
               <div
@@ -359,7 +359,7 @@ exports[`<PinnedMessagesCard /> unpin all should not allow to unpinall 1`] = `
       </button>
     </div>
     <div
-      class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar"
+      class="_scrollbar_nplv9_15 mx_AutoHideScrollbar"
       tabindex="-1"
     >
       <div
@@ -429,7 +429,7 @@ exports[`<PinnedMessagesCard /> unpin all should not allow to unpinall 1`] = `
               </button>
             </div>
             <div
-              class="mx_MTextBody mx_EventTile_content _root_dlp6w_8 _text_dlp6w_13"
+              class="mx_MTextBody mx_EventTile_content _root_1qjzw_15 _text_1qjzw_25"
               id="react-use-id-3"
             >
               <div
@@ -510,7 +510,7 @@ exports[`<PinnedMessagesCard /> unpin all should not allow to unpinall 1`] = `
               </button>
             </div>
             <div
-              class="mx_MTextBody mx_EventTile_content _root_dlp6w_8 _text_dlp6w_13"
+              class="mx_MTextBody mx_EventTile_content _root_1qjzw_15 _text_1qjzw_25"
               id="react-use-id-6"
             >
               <div

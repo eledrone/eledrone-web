@@ -3,7 +3,7 @@
 exports[`MessagePanel should handle large numbers of hidden events quickly 1`] = `
 <DocumentFragment>
   <div
-    class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar mx_ScrollPanel cls"
+    class="_scrollbar_nplv9_15 mx_AutoHideScrollbar mx_ScrollPanel cls"
     tabindex="-1"
   >
     <div
@@ -22,7 +22,7 @@ exports[`MessagePanel should handle large numbers of hidden events quickly 1`] =
 exports[`MessagePanel should handle lots of membership events quickly 1`] = `
 <DocumentFragment>
   <div
-    class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar mx_ScrollPanel cls"
+    class="_scrollbar_nplv9_15 mx_AutoHideScrollbar mx_ScrollPanel cls"
     tabindex="-1"
   >
     <div
@@ -39,7 +39,7 @@ exports[`MessagePanel should handle lots of membership events quickly 1`] = `
         >
           <div
             aria-label="Thu, Jan 1, 1970"
-            class="_flex_4dswl_9 mx_TimelineSeparator _timelineSeparator_yq5ye_8"
+            class="_flex_190os_17 mx_TimelineSeparator _timelineSeparator_1ltwe_15"
             role="separator"
             style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: center; --mx-flex-justify: start; --mx-flex-gap: 0; --mx-flex-wrap: nowrap;"
           >
@@ -47,7 +47,7 @@ exports[`MessagePanel should handle lots of membership events quickly 1`] = `
               role="none"
             />
             <div
-              class="_flex_4dswl_9 _content_u6fft_8"
+              class="_flex_190os_17 _content_1djmo_15"
               style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: start; --mx-flex-justify: start; --mx-flex-gap: 0; --mx-flex-wrap: nowrap;"
             >
               <h2
@@ -63,7 +63,7 @@ exports[`MessagePanel should handle lots of membership events quickly 1`] = `
           </div>
         </li>
         <div
-          class="_container_sq5fu_8 mx_EventTileBubble mx_HistoryTile"
+          class="_container_1d0sh_15 mx_EventTileBubble mx_HistoryTile"
         >
           <svg
             fill="currentColor"
@@ -77,7 +77,7 @@ exports[`MessagePanel should handle lots of membership events quickly 1`] = `
             />
           </svg>
           <div
-            class="_title_sq5fu_34"
+            class="_title_1d0sh_67"
           >
             You can't see earlier messages
           </div>
@@ -137,7 +137,7 @@ exports[`MessagePanel should handle lots of membership events quickly 1`] = `
 exports[`MessagePanel should handle lots of room creation events quickly 1`] = `
 <DocumentFragment>
   <div
-    class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar mx_ScrollPanel cls"
+    class="_scrollbar_nplv9_15 mx_AutoHideScrollbar mx_ScrollPanel cls"
     tabindex="-1"
   >
     <div

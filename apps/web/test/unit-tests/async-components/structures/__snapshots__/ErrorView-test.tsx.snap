@@ -51,12 +51,12 @@ exports[`<UnsupportedBrowserView /> should match snapshot 1`] = `
       <h1
         class="_typography_6v6n8_153 _font-heading-md-semibold_6v6n8_112"
       >
-        Element does not support this browser
+        Eledrone does not support this browser
       </h1>
       <p
         class="_typography_6v6n8_153 _font-body-lg-regular_6v6n8_69"
       >
-        Element uses some browser features which are not available in your current browser. Try updating this browser if you're not using the latest version and try again.
+        Eledrone uses some browser features which are not available in your current browser. Try updating this browser if you're not using the latest version and try again.
       </p>
       <p
         class="_typography_6v6n8_153 _font-body-lg-regular_6v6n8_69"
@@ -98,7 +98,7 @@ exports[`<UnsupportedBrowserView /> should match snapshot 1`] = `
         </span>
       </p>
       <div
-        class="_flex_4dswl_9 mx_ErrorView_flexContainer mx_ErrorView_buttons"
+        class="_flex_190os_17 mx_ErrorView_flexContainer mx_ErrorView_buttons"
         style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: start; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-4x); --mx-flex-wrap: nowrap;"
       >
         <button
@@ -136,10 +136,10 @@ exports[`<UnsupportedBrowserView /> should match snapshot 1`] = `
     <h2
       class="_typography_6v6n8_153 _font-heading-sm-semibold_6v6n8_93"
     >
-      Use Element Desktop instead
+      Use Eledrone Desktop instead
     </h2>
     <div
-      class="_flex_4dswl_9 mx_ErrorView_flexContainer"
+      class="_flex_190os_17 mx_ErrorView_flexContainer"
       style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: start; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-4x); --mx-flex-wrap: nowrap;"
     >
       <a
@@ -258,7 +258,7 @@ exports[`<UnsupportedBrowserView /> should match snapshot 1`] = `
       Or use our mobile app
     </h2>
     <div
-      class="_flex_4dswl_9 mx_ErrorView_flexContainer"
+      class="_flex_190os_17 mx_ErrorView_flexContainer"
       style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: start; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-6x); --mx-flex-wrap: nowrap;"
     >
       <a

@@ -1028,7 +1028,7 @@ exports[`<LoginWithQRFlow /> login.reciprocate renders QR code 1`] = `
       </div>
       <ol>
         <li>
-          Open Element on your other device
+          Open Eledrone on your other device
         </li>
         <li>
           <span>
@@ -1446,7 +1446,7 @@ exports[`<LoginWithQRFlow /> login.reciprocate renders spinner whilst QR generat
       </div>
       <ol>
         <li>
-          Open Element on your other device
+          Open Eledrone on your other device
         </li>
         <li>
           <span>
@@ -2443,7 +2443,7 @@ exports[`<LoginWithQRFlow /> login.start renders QR code 1`] = `
       </div>
       <ol>
         <li>
-          Open Element on your mobile device
+          Open Eledrone on your mobile device
         </li>
         <li>
           <span>
@@ -2838,7 +2838,7 @@ exports[`<LoginWithQRFlow /> login.start renders spinner whilst QR generating 1`
       </div>
       <ol>
         <li>
-          Open Element on your mobile device
+          Open Eledrone on your mobile device
         </li>
         <li>
           <span>

@@ -42,7 +42,7 @@ exports[`<RoomSummaryCard /> has button to edit topic 1`] = `
       </button>
     </div>
     <div
-      class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar"
+      class="_scrollbar_nplv9_15 mx_AutoHideScrollbar"
       tabindex="-1"
     >
       <header
@@ -69,7 +69,7 @@ exports[`<RoomSummaryCard /> has button to edit topic 1`] = `
           title=""
         />
         <section
-          class="_flex_4dswl_9 mx_RoomSummaryCard_badges"
+          class="_flex_190os_17 mx_RoomSummaryCard_badges"
           style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: start; --mx-flex-justify: center; --mx-flex-gap: var(--cpd-space-2x); --mx-flex-wrap: wrap;"
         >
           <span
@@ -131,18 +131,18 @@ exports[`<RoomSummaryCard /> has button to edit topic 1`] = `
           </span>
         </section>
         <section
-          class="_flex_4dswl_9 mx_RoomSummaryCard_topic"
+          class="_flex_190os_17 mx_RoomSummaryCard_topic"
           style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: start; --mx-flex-justify: center; --mx-flex-gap: var(--cpd-space-2x); --mx-flex-wrap: nowrap;"
         >
           <div
-            class="mx_RoomSummaryCard_topic_container mx_RoomSummaryCard_topic_box _box-flex_1odfs_9"
+            class="mx_RoomSummaryCard_topic_container mx_RoomSummaryCard_topic_box _box-flex_2shmn_17"
             style="--mx-box-flex: 1;"
           >
             <p
               class="_typography_6v6n8_153 _font-body-sm-regular_6v6n8_31"
             >
               <span
-                class="_container_15awj_8"
+                class="_container_1hqeo_15"
               >
                 <span
                   dir="auto"
@@ -177,7 +177,7 @@ exports[`<RoomSummaryCard /> has button to edit topic 1`] = `
             </button>
           </div>
           <div
-            class="mx_RoomSummaryCard_topic_edit _box-flex_1odfs_9"
+            class="mx_RoomSummaryCard_topic_edit _box-flex_2shmn_17"
             style="--mx-box-flex: 1;"
           >
             <a
@@ -781,7 +781,7 @@ exports[`<RoomSummaryCard /> renders the room summary 1`] = `
       </button>
     </div>
     <div
-      class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar"
+      class="_scrollbar_nplv9_15 mx_AutoHideScrollbar"
       tabindex="-1"
     >
       <header
@@ -808,7 +808,7 @@ exports[`<RoomSummaryCard /> renders the room summary 1`] = `
           title=""
         />
         <section
-          class="_flex_4dswl_9 mx_RoomSummaryCard_badges"
+          class="_flex_190os_17 mx_RoomSummaryCard_badges"
           style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: start; --mx-flex-justify: center; --mx-flex-gap: var(--cpd-space-2x); --mx-flex-wrap: wrap;"
         >
           <span
@@ -870,11 +870,11 @@ exports[`<RoomSummaryCard /> renders the room summary 1`] = `
           </span>
         </section>
         <section
-          class="_flex_4dswl_9 mx_RoomSummaryCard_topic"
+          class="_flex_190os_17 mx_RoomSummaryCard_topic"
           style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: start; --mx-flex-justify: center; --mx-flex-gap: var(--cpd-space-2x); --mx-flex-wrap: nowrap;"
         >
           <div
-            class="mx_RoomSummaryCard_topic_box _box-flex_1odfs_9"
+            class="mx_RoomSummaryCard_topic_box _box-flex_2shmn_17"
             style="--mx-box-flex: 1;"
           >
             <a
@@ -1478,7 +1478,7 @@ exports[`<RoomSummaryCard /> renders the room topic in the summary 1`] = `
       </button>
     </div>
     <div
-      class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar"
+      class="_scrollbar_nplv9_15 mx_AutoHideScrollbar"
       tabindex="-1"
     >
       <header
@@ -1505,7 +1505,7 @@ exports[`<RoomSummaryCard /> renders the room topic in the summary 1`] = `
           title=""
         />
         <section
-          class="_flex_4dswl_9 mx_RoomSummaryCard_badges"
+          class="_flex_190os_17 mx_RoomSummaryCard_badges"
           style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: start; --mx-flex-justify: center; --mx-flex-gap: var(--cpd-space-2x); --mx-flex-wrap: wrap;"
         >
           <span
@@ -1567,18 +1567,18 @@ exports[`<RoomSummaryCard /> renders the room topic in the summary 1`] = `
           </span>
         </section>
         <section
-          class="_flex_4dswl_9 mx_RoomSummaryCard_topic"
+          class="_flex_190os_17 mx_RoomSummaryCard_topic"
           style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: start; --mx-flex-justify: center; --mx-flex-gap: var(--cpd-space-2x); --mx-flex-wrap: nowrap;"
         >
           <div
-            class="mx_RoomSummaryCard_topic_container mx_RoomSummaryCard_topic_box _box-flex_1odfs_9"
+            class="mx_RoomSummaryCard_topic_container mx_RoomSummaryCard_topic_box _box-flex_2shmn_17"
             style="--mx-box-flex: 1;"
           >
             <p
               class="_typography_6v6n8_153 _font-body-sm-regular_6v6n8_31"
             >
               <span
-                class="_container_15awj_8"
+                class="_container_1hqeo_15"
               >
                 <span
                   dir="auto"
@@ -1613,7 +1613,7 @@ exports[`<RoomSummaryCard /> renders the room topic in the summary 1`] = `
             </button>
           </div>
           <div
-            class="mx_RoomSummaryCard_topic_edit _box-flex_1odfs_9"
+            class="mx_RoomSummaryCard_topic_edit _box-flex_2shmn_17"
             style="--mx-box-flex: 1;"
           >
             <a
