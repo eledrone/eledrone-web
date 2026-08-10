@@ -47,7 +47,7 @@ exports[`<UserInfo /> with crypto enabled renders <BasicUserInfo /> 1`] = `
       </button>
     </div>
     <div
-      class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar"
+      class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar"
       tabindex="-1"
     >
       <div
@@ -78,7 +78,7 @@ exports[`<UserInfo /> with crypto enabled renders <BasicUserInfo /> 1`] = `
         class="mx_UserInfo_container mx_UserInfo_header"
       >
         <div
-          class="_flex_4dswl_9 mx_UserInfo_profile"
+          class="_flex_78451d87 mx_UserInfo_profile"
           style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: center; --mx-flex-justify: start; --mx-flex-gap: 0; --mx-flex-wrap: nowrap;"
         >
           <h1
@@ -86,7 +86,7 @@ exports[`<UserInfo /> with crypto enabled renders <BasicUserInfo /> 1`] = `
             dir="auto"
           >
             <div
-              class="_flex_4dswl_9 mx_UserInfo_profile_name"
+              class="_flex_78451d87 mx_UserInfo_profile_name"
               style="--mx-flex-display: flex; --mx-flex-direction: row-reverse; --mx-flex-align: center; --mx-flex-justify: start; --mx-flex-gap: 0; --mx-flex-wrap: nowrap;"
             >
               @user:example.com
@@ -136,7 +136,7 @@ exports[`<UserInfo /> with crypto enabled renders <BasicUserInfo /> 1`] = `
           </p>
         </div>
         <div
-          class="_flex_4dswl_9 mx_UserInfo_verification"
+          class="_flex_78451d87 mx_UserInfo_verification"
           style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: center; --mx-flex-justify: center; --mx-flex-gap: 0; --mx-flex-wrap: nowrap;"
         >
           <p
@@ -357,7 +357,7 @@ exports[`<UserInfo /> with crypto enabled should render a deactivate button for 
       </button>
     </div>
     <div
-      class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar"
+      class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar"
       tabindex="-1"
     >
       <div
@@ -388,7 +388,7 @@ exports[`<UserInfo /> with crypto enabled should render a deactivate button for 
         class="mx_UserInfo_container mx_UserInfo_header"
       >
         <div
-          class="_flex_4dswl_9 mx_UserInfo_profile"
+          class="_flex_78451d87 mx_UserInfo_profile"
           style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: center; --mx-flex-justify: start; --mx-flex-gap: 0; --mx-flex-wrap: nowrap;"
         >
           <h1
@@ -396,7 +396,7 @@ exports[`<UserInfo /> with crypto enabled should render a deactivate button for 
             dir="auto"
           >
             <div
-              class="_flex_4dswl_9 mx_UserInfo_profile_name"
+              class="_flex_78451d87 mx_UserInfo_profile_name"
               style="--mx-flex-display: flex; --mx-flex-direction: row-reverse; --mx-flex-align: center; --mx-flex-justify: start; --mx-flex-gap: 0; --mx-flex-wrap: nowrap;"
             >
               @user:example.com
@@ -446,7 +446,7 @@ exports[`<UserInfo /> with crypto enabled should render a deactivate button for 
           </p>
         </div>
         <div
-          class="_flex_4dswl_9 mx_UserInfo_verification"
+          class="_flex_78451d87 mx_UserInfo_verification"
           style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: center; --mx-flex-justify: center; --mx-flex-gap: 0; --mx-flex-wrap: nowrap;"
         >
           <p

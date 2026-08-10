@@ -6,7 +6,7 @@ exports[`RoomView for a local room in state CREATING should match the snapshot 1
     class="mx_RoomView mx_RoomView--local"
   >
     <header
-      class="_flex_4dswl_9 mx_RoomHeader light-panel"
+      class="_flex_78451d87 mx_RoomHeader light-panel"
       style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: center; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-3x); --mx-flex-wrap: nowrap;"
     >
       <span
@@ -28,7 +28,7 @@ exports[`RoomView for a local room in state CREATING should match the snapshot 1
         type="button"
       >
         <div
-          class="mx_RoomHeader_info _box-flex_1odfs_9"
+          class="mx_RoomHeader_info _box-flex_b4e77cff"
           style="--mx-box-flex: 1;"
         >
           <div
@@ -91,7 +91,7 @@ exports[`RoomView for a local room in state ERROR should match the snapshot 1`] 
     class="mx_RoomView mx_RoomView--local"
   >
     <header
-      class="_flex_4dswl_9 mx_RoomHeader light-panel"
+      class="_flex_78451d87 mx_RoomHeader light-panel"
       style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: center; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-3x); --mx-flex-wrap: nowrap;"
     >
       <span
@@ -113,7 +113,7 @@ exports[`RoomView for a local room in state ERROR should match the snapshot 1`] 
         type="button"
       >
         <div
-          class="mx_RoomHeader_info _box-flex_1odfs_9"
+          class="mx_RoomHeader_info _box-flex_b4e77cff"
           style="--mx-box-flex: 1;"
         >
           <div
@@ -139,7 +139,7 @@ exports[`RoomView for a local room in state ERROR should match the snapshot 1`] 
         class="mx_RoomView_timeline"
       >
         <div
-          class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar mx_ScrollPanel mx_RoomView_messagePanel"
+          class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar mx_ScrollPanel mx_RoomView_messagePanel"
           tabindex="-1"
         >
           <div
@@ -154,7 +154,7 @@ exports[`RoomView for a local room in state ERROR should match the snapshot 1`] 
                 class="mx_NewRoomIntro"
               >
                 <div
-                  class="_container_sq5fu_8 mx_EventTileBubble mx_cryptoEvent"
+                  class="_container_4f89f61d mx_EventTileBubble mx_cryptoEvent"
                 >
                   <svg
                     color="var(--cpd-color-icon-critical-primary)"
@@ -169,12 +169,12 @@ exports[`RoomView for a local room in state ERROR should match the snapshot 1`] 
                     />
                   </svg>
                   <div
-                    class="_title_sq5fu_34"
+                    class="_title_4f89f61d"
                   >
                     End-to-end encryption isn't enabled
                   </div>
                   <div
-                    class="_subtitle_sq5fu_35"
+                    class="_subtitle_4f89f61d"
                   >
                     <span>
                        
@@ -215,12 +215,12 @@ exports[`RoomView for a local room in state ERROR should match the snapshot 1`] 
       </div>
       <div
         aria-labelledby="react-use-id-1"
-        class="_banner_n7ud0_8"
+        class="_banner_451d43ea"
         data-type="critical"
         role="status"
       >
         <div
-          class="_icon_n7ud0_50"
+          class="_icon_451d43ea"
         >
           <svg
             fill="currentColor"
@@ -236,20 +236,20 @@ exports[`RoomView for a local room in state ERROR should match the snapshot 1`] 
           </svg>
         </div>
         <div
-          class="_content_n7ud0_38"
+          class="_content_451d43ea"
         >
           <p
-            class="_typography_6v6n8_153 _font-body-md-medium_6v6n8_60 _title_mcq5y_24"
+            class="_typography_6v6n8_153 _font-body-md-medium_6v6n8_60 _title_ade89ecf"
             id="react-use-id-1"
           >
             Could not start a chat with this user
           </p>
         </div>
         <div
-          class="_actions_n7ud0_61"
+          class="_actions_451d43ea"
         >
           <button
-            class="_button_1nw83_8 _primaryAction_mcq5y_20 _has-icon_1nw83_60"
+            class="_button_1nw83_8 _primaryAction_ade89ecf _has-icon_1nw83_60"
             data-kind="primary"
             data-size="md"
             role="button"
@@ -288,7 +288,7 @@ exports[`RoomView for a local room in state NEW should match the snapshot 1`] = 
     class="mx_RoomView mx_RoomView--local"
   >
     <header
-      class="_flex_4dswl_9 mx_RoomHeader light-panel"
+      class="_flex_78451d87 mx_RoomHeader light-panel"
       style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: center; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-3x); --mx-flex-wrap: nowrap;"
     >
       <span
@@ -310,7 +310,7 @@ exports[`RoomView for a local room in state NEW should match the snapshot 1`] = 
         type="button"
       >
         <div
-          class="mx_RoomHeader_info _box-flex_1odfs_9"
+          class="mx_RoomHeader_info _box-flex_b4e77cff"
           style="--mx-box-flex: 1;"
         >
           <div
@@ -336,7 +336,7 @@ exports[`RoomView for a local room in state NEW should match the snapshot 1`] = 
         class="mx_RoomView_timeline"
       >
         <div
-          class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar mx_ScrollPanel mx_RoomView_messagePanel"
+          class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar mx_ScrollPanel mx_RoomView_messagePanel"
           tabindex="-1"
         >
           <div
@@ -351,7 +351,7 @@ exports[`RoomView for a local room in state NEW should match the snapshot 1`] = 
                 class="mx_NewRoomIntro"
               >
                 <div
-                  class="_container_sq5fu_8 mx_EventTileBubble mx_cryptoEvent"
+                  class="_container_4f89f61d mx_EventTileBubble mx_cryptoEvent"
                 >
                   <svg
                     color="var(--cpd-color-icon-critical-primary)"
@@ -366,12 +366,12 @@ exports[`RoomView for a local room in state NEW should match the snapshot 1`] = 
                     />
                   </svg>
                   <div
-                    class="_title_sq5fu_34"
+                    class="_title_4f89f61d"
                   >
                     End-to-end encryption isn't enabled
                   </div>
                   <div
-                    class="_subtitle_sq5fu_35"
+                    class="_subtitle_4f89f61d"
                   >
                     <span>
                        
@@ -676,7 +676,7 @@ exports[`RoomView for a local room in state NEW that is encrypted should match t
     class="mx_RoomView mx_RoomView--local"
   >
     <header
-      class="_flex_4dswl_9 mx_RoomHeader light-panel"
+      class="_flex_78451d87 mx_RoomHeader light-panel"
       style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: center; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-3x); --mx-flex-wrap: nowrap;"
     >
       <span
@@ -698,7 +698,7 @@ exports[`RoomView for a local room in state NEW that is encrypted should match t
         type="button"
       >
         <div
-          class="mx_RoomHeader_info _box-flex_1odfs_9"
+          class="mx_RoomHeader_info _box-flex_b4e77cff"
           style="--mx-box-flex: 1;"
         >
           <div
@@ -742,7 +742,7 @@ exports[`RoomView for a local room in state NEW that is encrypted should match t
         class="mx_RoomView_timeline"
       >
         <div
-          class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar mx_ScrollPanel mx_RoomView_messagePanel"
+          class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar mx_ScrollPanel mx_RoomView_messagePanel"
           tabindex="-1"
         >
           <div
@@ -754,7 +754,7 @@ exports[`RoomView for a local room in state NEW that is encrypted should match t
               style="height: 400px;"
             >
               <div
-                class="_container_sq5fu_8 mx_EventTileBubble mx_cryptoEvent _content_ufv8a_8"
+                class="_container_4f89f61d mx_EventTileBubble mx_cryptoEvent _content_11476044"
               >
                 <svg
                   data-state="supported"
@@ -769,12 +769,12 @@ exports[`RoomView for a local room in state NEW that is encrypted should match t
                   />
                 </svg>
                 <div
-                  class="_title_sq5fu_34"
+                  class="_title_4f89f61d"
                 >
                   Encryption enabled
                 </div>
                 <div
-                  class="_subtitle_sq5fu_35"
+                  class="_subtitle_4f89f61d"
                 >
                   Messages in this chat will be end-to-end encrypted.
                 </div>
@@ -1145,7 +1145,7 @@ exports[`RoomView should hide the composer when hideComposer=true 1`] = `
         data-layout="group"
       >
         <header
-          class="_flex_4dswl_9 mx_RoomHeader light-panel"
+          class="_flex_78451d87 mx_RoomHeader light-panel"
           style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: center; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-3x); --mx-flex-wrap: nowrap;"
         >
           <button
@@ -1168,7 +1168,7 @@ exports[`RoomView should hide the composer when hideComposer=true 1`] = `
             type="button"
           >
             <div
-              class="mx_RoomHeader_info _box-flex_1odfs_9"
+              class="mx_RoomHeader_info _box-flex_b4e77cff"
               style="--mx-box-flex: 1;"
             >
               <div
@@ -1311,7 +1311,7 @@ exports[`RoomView should hide the composer when hideComposer=true 1`] = `
           </div>
         </header>
         <div
-          class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar mx_AuxPanel"
+          class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar mx_AuxPanel"
           role="region"
           tabindex="-1"
         >
@@ -1322,7 +1322,7 @@ exports[`RoomView should hide the composer when hideComposer=true 1`] = `
           data-testid="timeline"
         >
           <div
-            class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar mx_ScrollPanel mx_RoomView_messagePanel"
+            class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar mx_ScrollPanel mx_RoomView_messagePanel"
             tabindex="-1"
           >
             <div
@@ -1381,7 +1381,7 @@ exports[`RoomView should hide the header when hideHeader=true 1`] = `
         data-layout="group"
       >
         <div
-          class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar mx_AuxPanel"
+          class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar mx_AuxPanel"
           role="region"
           tabindex="-1"
         >
@@ -1392,7 +1392,7 @@ exports[`RoomView should hide the header when hideHeader=true 1`] = `
           data-testid="timeline"
         >
           <div
-            class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar mx_ScrollPanel mx_RoomView_messagePanel"
+            class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar mx_ScrollPanel mx_RoomView_messagePanel"
             tabindex="-1"
           >
             <div
@@ -1700,7 +1700,7 @@ exports[`RoomView should hide the pinned message banner when hidePinnedMessageBa
         data-layout="group"
       >
         <header
-          class="_flex_4dswl_9 mx_RoomHeader light-panel"
+          class="_flex_78451d87 mx_RoomHeader light-panel"
           style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: center; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-3x); --mx-flex-wrap: nowrap;"
         >
           <button
@@ -1723,7 +1723,7 @@ exports[`RoomView should hide the pinned message banner when hidePinnedMessageBa
             type="button"
           >
             <div
-              class="mx_RoomHeader_info _box-flex_1odfs_9"
+              class="mx_RoomHeader_info _box-flex_b4e77cff"
               style="--mx-box-flex: 1;"
             >
               <div
@@ -1866,7 +1866,7 @@ exports[`RoomView should hide the pinned message banner when hidePinnedMessageBa
           </div>
         </header>
         <div
-          class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar mx_AuxPanel"
+          class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar mx_AuxPanel"
           role="region"
           tabindex="-1"
         >
@@ -1877,7 +1877,7 @@ exports[`RoomView should hide the pinned message banner when hidePinnedMessageBa
           data-testid="timeline"
         >
           <div
-            class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar mx_ScrollPanel mx_RoomView_messagePanel"
+            class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar mx_ScrollPanel mx_RoomView_messagePanel"
             tabindex="-1"
           >
             <div
@@ -2185,7 +2185,7 @@ exports[`RoomView should hide the right panel when hideRightPanel=true 1`] = `
         data-layout="group"
       >
         <header
-          class="_flex_4dswl_9 mx_RoomHeader light-panel"
+          class="_flex_78451d87 mx_RoomHeader light-panel"
           style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: center; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-3x); --mx-flex-wrap: nowrap;"
         >
           <button
@@ -2208,7 +2208,7 @@ exports[`RoomView should hide the right panel when hideRightPanel=true 1`] = `
             type="button"
           >
             <div
-              class="mx_RoomHeader_info _box-flex_1odfs_9"
+              class="mx_RoomHeader_info _box-flex_b4e77cff"
               style="--mx-box-flex: 1;"
             >
               <div
@@ -2351,7 +2351,7 @@ exports[`RoomView should hide the right panel when hideRightPanel=true 1`] = `
           </div>
         </header>
         <div
-          class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar mx_AuxPanel"
+          class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar mx_AuxPanel"
           role="region"
           tabindex="-1"
         >
@@ -2362,7 +2362,7 @@ exports[`RoomView should hide the right panel when hideRightPanel=true 1`] = `
           data-testid="timeline"
         >
           <div
-            class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar mx_ScrollPanel mx_RoomView_messagePanel"
+            class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar mx_ScrollPanel mx_RoomView_messagePanel"
             tabindex="-1"
           >
             <div
@@ -2670,7 +2670,7 @@ exports[`RoomView should not display the timeline when the room encryption is lo
         data-layout="group"
       >
         <header
-          class="_flex_4dswl_9 mx_RoomHeader light-panel"
+          class="_flex_78451d87 mx_RoomHeader light-panel"
           style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: center; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-3x); --mx-flex-wrap: nowrap;"
         >
           <button
@@ -2693,7 +2693,7 @@ exports[`RoomView should not display the timeline when the room encryption is lo
             type="button"
           >
             <div
-              class="mx_RoomHeader_info _box-flex_1odfs_9"
+              class="mx_RoomHeader_info _box-flex_b4e77cff"
               style="--mx-box-flex: 1;"
             >
               <div
@@ -2836,7 +2836,7 @@ exports[`RoomView should not display the timeline when the room encryption is lo
           </div>
         </header>
         <div
-          class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar mx_AuxPanel"
+          class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar mx_AuxPanel"
           role="region"
           tabindex="-1"
         >
@@ -2891,7 +2891,7 @@ exports[`RoomView should not display the timeline when the room encryption is lo
         data-layout="group"
       >
         <header
-          class="_flex_4dswl_9 mx_RoomHeader light-panel"
+          class="_flex_78451d87 mx_RoomHeader light-panel"
           style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: center; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-3x); --mx-flex-wrap: nowrap;"
         >
           <button
@@ -2914,7 +2914,7 @@ exports[`RoomView should not display the timeline when the room encryption is lo
             type="button"
           >
             <div
-              class="mx_RoomHeader_info _box-flex_1odfs_9"
+              class="mx_RoomHeader_info _box-flex_b4e77cff"
               style="--mx-box-flex: 1;"
             >
               <div
@@ -3075,7 +3075,7 @@ exports[`RoomView should not display the timeline when the room encryption is lo
           </div>
         </header>
         <div
-          class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar mx_AuxPanel"
+          class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar mx_AuxPanel"
           role="region"
           tabindex="-1"
         >
@@ -3086,7 +3086,7 @@ exports[`RoomView should not display the timeline when the room encryption is lo
           data-testid="timeline"
         >
           <div
-            class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar mx_ScrollPanel mx_RoomView_messagePanel"
+            class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar mx_ScrollPanel mx_RoomView_messagePanel"
             tabindex="-1"
           >
             <div
@@ -3434,7 +3434,7 @@ exports[`RoomView video rooms should render joined video room view 1`] = `
         data-layout="group"
       >
         <header
-          class="_flex_4dswl_9 mx_RoomHeader light-panel"
+          class="_flex_78451d87 mx_RoomHeader light-panel"
           style="--mx-flex-display: flex; --mx-flex-direction: row; --mx-flex-align: center; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-3x); --mx-flex-wrap: nowrap;"
         >
           <button
@@ -3457,7 +3457,7 @@ exports[`RoomView video rooms should render joined video room view 1`] = `
             type="button"
           >
             <div
-              class="mx_RoomHeader_info _box-flex_1odfs_9"
+              class="mx_RoomHeader_info _box-flex_b4e77cff"
               style="--mx-box-flex: 1;"
             >
               <div
@@ -3676,7 +3676,7 @@ exports[`RoomView video rooms should render joined video room view 1`] = `
               class="mx_TimelineCard_timeline"
             >
               <div
-                class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar mx_ScrollPanel mx_RoomView_messagePanel"
+                class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar mx_ScrollPanel mx_RoomView_messagePanel"
                 tabindex="-1"
               >
                 <div
