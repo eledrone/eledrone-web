@@ -628,7 +628,7 @@ describe("<Notifications />", () => {
                 app_display_name: "Email Notifications",
                 app_id: "m.email",
                 append: true,
-                data: { brand: "Element" },
+                data: { brand: "Eledrone" },
                 device_display_name: "test@example.tld",
                 kind: "email",
                 lang: "en-US",
@@ -651,7 +651,7 @@ describe("<Notifications />", () => {
                     {
                         app_display_name: "Email Notifications",
                         app_id: "m.email",
-                        data: { brand: "Element" },
+                        data: { brand: "Eledrone" },
                         device_display_name: "test@example.tld",
                         kind: "email",
                         lang: "en-US",

@@ -16,7 +16,7 @@ import { makeDelegatedAuthMetadata } from "../../../test-utils/auth";
 
 describe("getOAuthClientId()", () => {
     const issuer = "https://auth.com/";
-    const clientName = "Element";
+    const clientName = "Eledrone";
     const baseUrl = "https://just.testing";
     const dynamicClientId = "xyz789";
     const staticOAuthClients = {

@@ -20,7 +20,7 @@ describe("positionFailureMessage()", () => {
     it.each<TestCase>([
         [
             1,
-            "Element was denied permission to fetch your location. Please allow location access in your browser settings.",
+            "Eledrone was denied permission to fetch your location. Please allow location access in your browser settings.",
         ],
         [2, "Failed to fetch your location. Please try again later."],
         [3, "Timed out trying to fetch your location. Please try again later."],
