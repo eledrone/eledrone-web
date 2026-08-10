@@ -1,0 +1,164 @@
+name: eledrone desktop
+
+# Builds the desktop app for Windows and Linux, and publishes a GitHub Release
+# when a v* tag is pushed.
+#
+#   push to develop  -> builds both platforms, artifacts kept for 14 days
+#   push tag v1.13.0 -> builds both platforms, creates Release "v1.13.0"
+#   manual dispatch  -> builds both platforms
+#
+# Deliberately independent of Element's own workflows: no code signing, no
+# packages.element.io, no Netlify/Localazy, no secrets at all.
+#
+# Two things this does differently from the inherited element workflows:
+#   * The web app is built here and packed into webapp.asar. `pnpm run fetch`
+#     downloads upstream element-web's prebuilt tarball, which would ship
+#     Element's branding instead of ours.
+#   * Native modules (matrix-seshat) are not built, so local event search is
+#     unavailable. Building them needs Rust plus SQLCipher on both platforms.
+
+on:
+  push:
+    branches: [develop]
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: eledrone-desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write # needed to create the Release
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+          - os: ubuntu-latest
+            platform: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Long, deeply nested paths under packages/shared-components/__vis__
+      # exceed the Windows 260 character limit without this.
+      - name: Allow long paths (Windows)
+        if: runner.os == 'Windows'
+        run: git config --global core.longpaths true
+
+      # apps/web's prebuild step shells out to `sh`, which is not on PATH for
+      # child processes on the Windows runner unless Git's bin directory is.
+      - name: Put sh on PATH (Windows)
+        if: runner.os == 'Windows'
+        run: echo "C:\Program Files\Git\bin" >> $env:GITHUB_PATH
+
+      - run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Version
+        id: version
+        shell: bash
+        run: |
+          # Tags drive the released version; other builds keep the version in
+          # package.json, because prerelease suffixes break MSI generation.
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            version="${GITHUB_REF_NAME#v}"
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          else
+            version=$(node -p "require('./apps/desktop/package.json').version")
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "building version $version"
+
+      - name: Build the web app
+        shell: bash
+        working-directory: apps/web
+        run: pnpm build
+
+      - name: Pack the web app into webapp.asar
+        shell: bash
+        working-directory: apps/desktop
+        run: |
+          pnpm exec asar p ../web/webapp webapp.asar
+          ls -la webapp.asar
+
+      - name: Build the desktop app
+        shell: bash
+        working-directory: apps/desktop
+        env:
+          # electron-builder.ts reads this and overrides the package version.
+          VERSION: ${{ steps.version.outputs.release == 'true' && steps.version.outputs.version || '' }}
+        run: |
+          # Extracting electron can fail with EPERM on Windows when a scanner
+          # still holds the freshly written files. It succeeds on a retry.
+          for attempt in 1 2 3; do
+            if pnpm run build --publish never; then
+              echo "built on attempt $attempt"
+              exit 0
+            fi
+            echo "attempt $attempt failed, retrying in 15s"
+            rm -rf dist
+            sleep 15
+          done
+          echo "electron-builder failed three times"
+          exit 1
+
+      - name: List what was produced
+        shell: bash
+        working-directory: apps/desktop
+        run: find dist -maxdepth 2 -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.deb' -o -name '*.tar.gz' \) -exec ls -lh {} \;
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eledrone-${{ matrix.platform }}-${{ steps.version.outputs.version }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            apps/desktop/dist/*.msi
+            apps/desktop/dist/*.deb
+            apps/desktop/dist/*.tar.gz
+            apps/desktop/dist/squirrel-windows/*.exe
+
+  release:
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - run: ls -lhR artifacts
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          body: |
+            Desktop builds of eledrone for Windows and Linux.
+
+            | Platform | File |
+            |---|---|
+            | Windows installer (per user, no admin) | `Eledrone Setup *.exe` |
+            | Windows installer (per machine) | `Eledrone *.msi` |
+            | Linux (Debian/Ubuntu) | `*.deb` |
+            | Linux (portable) | `*.tar.gz` |
+
+            These builds are **unsigned**, so Windows SmartScreen will warn on
+            first run, and local event search is unavailable because the native
+            search module is not built.
+          files: artifacts/**/*
