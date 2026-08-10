@@ -9,8 +9,12 @@ secrets.
 | Trigger | Result |
 |---|---|
 | push to `develop` | both platforms built, artifacts attached to the run (14 days) |
-| push a `v*` tag | both platforms built, a GitHub Release is created |
+| push an `eledrone-v*` tag | both platforms built, a GitHub Release is created |
 | Actions → Run workflow | both platforms built on demand |
+
+Artifacts from a `develop` build are **not** a Release — they live on the run page
+under *Artifacts* and expire. Only a tag produces something in the Releases
+section of the repository.
 
 Development builds are downloaded from the run's **Artifacts** section. Releases
 appear under **Releases** with the installers attached.
@@ -20,12 +24,18 @@ appear under **Releases** with the installers attached.
 Versions come from the tag, so the tag is the single source of truth:
 
 ```bash
-git tag v1.12.26
-git push origin v1.12.26
+git tag eledrone-v1.12.26
+git push origin eledrone-v1.12.26
 ```
 
 `electron-builder.ts` reads `$VERSION`, which the workflow sets from the tag with
-the leading `v` stripped. Nothing needs committing to bump a version.
+the `eledrone-v` prefix stripped. Nothing needs committing to bump a version.
+
+**The `eledrone-v` prefix is required, not cosmetic.** This fork inherits every
+upstream element-web tag — about 670 of them — and syncing upstream pushes more.
+A bare `v*` trigger would fire a build and publish a release for every upstream
+tag that arrives, and would eventually collide with an upstream version of the
+same number.
 
 Two rules for choosing the number:
 
