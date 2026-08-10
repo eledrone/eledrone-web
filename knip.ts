@@ -96,6 +96,8 @@ export default {
                 "gpg",
                 // Used for the macOS universal builds
                 "lipo",
+                // Used to route desktop audio into a screen share on Linux
+                "pactl",
             ],
         },
         "modules": {

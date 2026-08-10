@@ -6,14 +6,14 @@ secrets.
 
 ## Getting a build
 
-| Trigger | Result |
-|---|---|
-| push to `develop` | both platforms built, artifacts attached to the run (14 days) |
-| push to `main` | both platforms built **and** a GitHub Release published |
-| Actions → Run workflow | both platforms built on demand |
+| Trigger                | Result                                                        |
+| ---------------------- | ------------------------------------------------------------- |
+| push to `develop`      | both platforms built, artifacts attached to the run (14 days) |
+| push to `main`         | both platforms built **and** a GitHub Release published       |
+| Actions → Run workflow | both platforms built on demand                                |
 
 Artifacts from a `develop` build are **not** a Release — they live on the run page
-under *Artifacts* and expire after 14 days. Only `main` populates the Releases
+under _Artifacts_ and expire after 14 days. Only `main` populates the Releases
 section, where downloads are permanent.
 
 Development builds are downloaded from the run's **Artifacts** section. Releases
@@ -87,11 +87,11 @@ files for reference. Move one back into `.github/workflows/` to re-enable it.
 
 Still active:
 
-| Workflow | Why |
-|---|---|
+| Workflow               | Why                                 |
+| ---------------------- | ----------------------------------- |
 | `eledrone-desktop.yml` | builds and releases the desktop app |
-| `tests.yml` | unit tests |
-| `static_analysis.yaml` | lint and types |
+| `tests.yml`            | unit tests                          |
+| `static_analysis.yaml` | lint and types                      |
 
 `build.yml` is disabled because `eledrone-desktop.yml` builds the web app itself,
 so running both did the same work twice. The shared component visual tests are
