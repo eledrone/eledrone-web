@@ -65,6 +65,12 @@ describe("<RoomListPanel />", () => {
         expect(screen.queryByRole("button", { name: "Search Ctrl K" })).toBeNull();
     });
 
+    it("should render the mic and camera toggles at the foot of the panel", () => {
+        renderComponent();
+        expect(screen.getByRole("button", { name: "Mute your microphone when joining calls" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Turn off your camera when joining calls" })).toBeInTheDocument();
+    });
+
     it("should move to the next landmark when the shortcut key is pressed", async () => {
         renderComponent();
 

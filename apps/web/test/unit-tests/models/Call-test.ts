@@ -841,8 +841,88 @@ describe("ElementCall", () => {
 
         afterEach(() => cleanUpCallAndWidget(call, widget));
 
-        // TODO refactor initial device configuration to use the EW settings.
-        // Add tests for passing EW device configuration to the widget.
+        describe("initial device state", () => {
+            let originalGetValue: typeof SettingsStore.getValue;
+            let overrides: Partial<Record<SettingKey, boolean>>;
+
+            const emitDeviceMuteReport = (data: { audio_enabled: boolean; video_enabled: boolean }): void => {
+                widgetApi.emit(`action:${ElementWidgetActions.DeviceMute}`, {
+                    preventDefault: jest.fn(),
+                    detail: { data },
+                });
+            };
+
+            beforeEach(() => {
+                overrides = {};
+                originalGetValue = SettingsStore.getValue;
+                SettingsStore.getValue = ((name: SettingKey, ...rest: any[]): any =>
+                    name in overrides
+                        ? overrides[name]
+                        : (originalGetValue as any)(name, ...rest)) as typeof SettingsStore.getValue;
+            });
+
+            afterEach(() => {
+                SettingsStore.getValue = originalGetValue;
+            });
+
+            it("joins with the mic and camera the left panel has switched on", async () => {
+                await call.start({});
+
+                expect(widgetApi.transport.send).toHaveBeenCalledWith(ElementWidgetActions.DeviceMute, {
+                    audio_enabled: true,
+                    video_enabled: true,
+                });
+            });
+
+            it("joins muted when the left panel's mic toggle is off", async () => {
+                overrides["audioInputMuted"] = true;
+
+                await call.start({});
+
+                expect(widgetApi.transport.send).toHaveBeenCalledWith(ElementWidgetActions.DeviceMute, {
+                    audio_enabled: false,
+                    video_enabled: true,
+                });
+            });
+
+            it("leaves the camera off for a voice call whatever the toggle says", async () => {
+                await call.start({ voiceOnly: true });
+
+                expect(widgetApi.transport.send).toHaveBeenCalledWith(ElementWidgetActions.DeviceMute, {
+                    audio_enabled: true,
+                    video_enabled: false,
+                });
+            });
+
+            it("asks again when the widget reports it came up in another state", async () => {
+                overrides["audioInputMuted"] = true;
+                await call.start({});
+                mocked(widgetApi.transport).send.mockClear();
+
+                // Element Call ignores the request until it has enumerated its
+                // devices, and only then says what it settled on
+                emitDeviceMuteReport({ audio_enabled: true, video_enabled: true });
+
+                expect(widgetApi.transport.send).toHaveBeenCalledWith(ElementWidgetActions.DeviceMute, {
+                    audio_enabled: false,
+                    video_enabled: true,
+                });
+            });
+
+            it("stops asking once the widget confirms the state", async () => {
+                overrides["audioInputMuted"] = true;
+                mocked(widgetApi.transport).send.mockResolvedValue({ audio_enabled: false, video_enabled: true });
+                await call.start({});
+                await jest.advanceTimersByTimeAsync(0);
+                mocked(widgetApi.transport).send.mockClear();
+
+                // The user unmuting from within the call is theirs to decide, and
+                // must not be undone by the left panel's toggle
+                emitDeviceMuteReport({ audio_enabled: true, video_enabled: true });
+
+                expect(widgetApi.transport.send).not.toHaveBeenCalled();
+            });
+        });
 
         it("waits for messaging when starting (widget API available immediately)", async () => {
             // Temporarily remove the messaging to simulate connecting while the

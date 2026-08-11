@@ -46,9 +46,14 @@ import SdkConfig from "../SdkConfig.ts";
 import DMRoomMap from "../utils/DMRoomMap.ts";
 import { type WidgetMessaging, WidgetMessagingEvent } from "../stores/widgets/WidgetMessaging.ts";
 import { BugReportEndpointURLLocal } from "../IConfigOptions.ts";
+import { type DeviceMuteState, getDefaultDeviceMuteState } from "../utils/call-device-defaults.ts";
 
 const TIMEOUT_MS = 16000;
 const logger = rootLogger.getChild("models/Call");
+
+// Whether a widget's reported mic and camera state is the one we asked it for.
+const deviceMuteStateMatches = (reported: DeviceMuteState | undefined, desired: Required<DeviceMuteState>): boolean =>
+    reported?.audio_enabled === desired.audio_enabled && reported?.video_enabled === desired.video_enabled;
 
 // Waits until an event is emitted satisfying the given predicate
 const waitForEvent = async (
@@ -639,6 +644,13 @@ export class ElementCall extends Call {
     private settingsStoreCallEncryptionWatcher?: string;
     private terminationTimer?: number;
 
+    /**
+     * The mic and camera state this call still has to be put into, from the left
+     * panel's toggles. Null once the widget has confirmed it, after which the
+     * user's choices within the call itself are left alone.
+     */
+    private pendingDeviceMuteState: Required<DeviceMuteState> | null = null;
+
     public get presented(): boolean {
         return super.presented;
     }
@@ -913,6 +925,12 @@ export class ElementCall extends Call {
         widgetApi.on(`action:${ElementWidgetActions.HangupCall}`, this.onHangup);
         widgetApi.on(`action:${ElementWidgetActions.Close}`, this.onClose);
         widgetApi.on(`action:${ElementWidgetActions.DeviceMute}`, this.onDeviceMute);
+
+        // Join with the mic and camera state the user picked in the left panel,
+        // rather than Element Call's own default of both on.
+        this.pendingDeviceMuteState = getDefaultDeviceMuteState(this.widgetGenerationParameters.voiceOnly);
+        void this.applyPendingDeviceMuteState();
+
         return widgetApi;
     }
 
@@ -984,9 +1002,45 @@ export class ElementCall extends Call {
         this.participants = participants;
     }
 
+    /**
+     * Asks the widget for the mic and camera state the left panel's toggles are
+     * set to, if it is not already in it.
+     *
+     * Element Call ignores the request until it has enumerated its devices, and
+     * says nothing when it does - so a request sent this early may simply be
+     * dropped. That is what {@link pendingDeviceMuteState} is for: it survives
+     * until the widget reports back a state that matches, and `onDeviceMute`
+     * asks again with each report that does not.
+     */
+    private async applyPendingDeviceMuteState(): Promise<void> {
+        const desired = this.pendingDeviceMuteState;
+        if (desired === null) return;
+
+        try {
+            const result = await this.widgetApi!.transport.send<Required<DeviceMuteState>, DeviceMuteState>(
+                ElementWidgetActions.DeviceMute,
+                desired,
+            );
+            if (deviceMuteStateMatches(result, desired)) this.pendingDeviceMuteState = null;
+        } catch (e) {
+            logger.warn(`Failed to set the initial mic and camera state for the call in ${this.roomId}`, e);
+        }
+    }
+
     private readonly onDeviceMute = (ev: CustomEvent<IWidgetApiRequest>): void => {
         ev.preventDefault();
         this.widgetApi!.transport.reply(ev.detail, {}); // ack
+
+        const desired = this.pendingDeviceMuteState;
+        if (desired === null) return; // The call's own controls are in charge from here on
+
+        if (deviceMuteStateMatches(ev.detail.data, desired)) {
+            this.pendingDeviceMuteState = null;
+        } else {
+            // The widget has devices now, but started in a state the user did
+            // not ask for, so ask again.
+            void this.applyPendingDeviceMuteState();
+        }
     };
 
     private readonly onJoin = (ev: CustomEvent<IWidgetApiRequest>): void => {

@@ -3846,6 +3846,13 @@
         "connection_lost_description": "You cannot place calls without a connection to the server.",
         "consulting": "Consulting with %(transferTarget)s. <a>Transfer to %(transferee)s</a>",
         "default_device": "Default Device",
+        "default_devices": {
+            "disable_camera": "Turn off your camera when joining calls",
+            "disable_microphone": "Mute your microphone when joining calls",
+            "enable_camera": "Turn on your camera when joining calls",
+            "enable_microphone": "Unmute your microphone when joining calls",
+            "label": "Microphone and camera defaults"
+        },
         "dial": "Dial",
         "dialpad": "Dialpad",
         "disable_camera": "Turn off camera",
