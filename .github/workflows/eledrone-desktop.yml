@@ -28,6 +28,13 @@ name: eledrone desktop
 on:
     push:
         branches: [develop, main]
+        # A push that only touches documentation cannot change the installers, so
+        # skip a ~20 minute two-platform build. A push containing both docs and
+        # code still builds: the skip applies only when *every* changed file
+        # matches. Use workflow_dispatch if you need a build anyway.
+        paths-ignore:
+            - "**.md"
+            - "docs/**"
     workflow_dispatch:
 
 concurrency:
