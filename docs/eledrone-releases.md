@@ -116,11 +116,11 @@ Linux broke CI.
   path with forward slashes. Verified by building the same commit on both
   platforms: identical bundle, all 312 class names byte for byte.
 
-  That config file is also listed in the `build` target's `inputs` in
-  `packages/shared-components/project.json`, and has to stay there. Nx caches the
-  build, and a config file that is not an input does not invalidate the cache: the
-  build replays a stale `dist/`, and a change to how class names are generated
-  appears to do nothing at all.
+    That config file is also listed in the `build` target's `inputs` in
+    `packages/shared-components/project.json`, and has to stay there. Nx caches the
+    build, and a config file that is not an input does not invalidate the cache: the
+    build replays a stale `dist/`, and a change to how class names are generated
+    appears to do nothing at all.
 
 - **Formatted dates** followed the machine timezone. Both runners now pin
   `TZ=UTC` in their own config rather than relying on the caller.
