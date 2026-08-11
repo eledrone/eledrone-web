@@ -158,6 +158,12 @@ const config: Omit<Writable<Configuration>, "electronFuses"> & {
      * electron package and therefore depends on that instead.
      */
     pacman: {
+        // electron-builder would call this "<name>-<version>.pacman", which is not a
+        // name pacman -U expects and, more practically, matches none of the usual
+        // *.pkg.tar.* globs - the package gets built and then silently dropped.
+        // ${arch} expands to "x64" here rather than "x86_64"; harmless, since pacman
+        // reads the real architecture from .PKGINFO, not the filename.
+        artifactName: "${name}-${version}-${arch}.pkg.tar.xz",
         depends: [
             "gtk3",
             "nss",

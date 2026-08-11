@@ -131,7 +131,25 @@ jobs:
             - name: List what was produced
               shell: bash
               working-directory: apps/desktop
-              run: find dist -maxdepth 2 -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.deb' -o -name '*.pkg.tar.*' -o -name '*.tar.gz' \) -exec ls -lh {} \;
+              run: find dist -maxdepth 2 -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.deb' -o -name '*.pkg.tar.*' -o -name '*.pacman' -o -name '*.tar.gz' \) -exec ls -lh {} \;
+
+            # electron-builder happily builds a package under a name that matches none
+            # of the upload globs, and nothing complains: the build is green and the
+            # artifact is simply missing a file. Fail here instead.
+            - name: Check every expected Linux package exists
+              if: runner.os == 'Linux'
+              shell: bash
+              working-directory: apps/desktop
+              run: |
+                  for pattern in 'dist/*.deb' 'dist/*.tar.gz' 'dist/*.pkg.tar.*'; do
+                    # shellcheck disable=SC2086
+                    if ! compgen -G "$pattern" > /dev/null; then
+                      echo "::error::nothing matched $pattern - it was not built, or it was built under a name the upload step does not collect"
+                      ls -la dist
+                      exit 1
+                    fi
+                  done
+                  echo "all three Linux packages present"
 
             - uses: actions/upload-artifact@v4
               with:
@@ -148,6 +166,7 @@ jobs:
                       apps/desktop/dist/*.msi
                       apps/desktop/dist/*.deb
                       apps/desktop/dist/*.pkg.tar.*
+                      apps/desktop/dist/*.pacman
                       apps/desktop/dist/*.tar.gz
 
     release:
