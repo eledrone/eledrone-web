@@ -99,63 +99,58 @@ disabled as they only matter when changing those components. Element's own
 `build_desktop_*` workflows are disabled too: superseded by this one, and
 dependent on Element's signing and publishing setup.
 
-## Regenerating snapshots and running the format check
-
-Snapshots regenerate identically on Windows and Linux, so do it wherever you are:
+## Regenerating snapshots
 
 ```bash
-pnpm test:snapshots:update      # both suites, from the repository root
+pnpm test:snapshots:update      # both runners, from either platform
 ```
 
-That is `jest --ci -u` in `apps/web` followed by `vitest run -u` at the root; run
-either alone if you only need one.
+This works the same on Windows and Linux. It did not always: snapshots used to
+embed two machine-specific values, so regenerating them anywhere other than
+Linux broke CI.
 
-Afterwards, read the diff before committing. It should contain only what you
-expected to change — a snapshot moving for no reason you can name means something
-about the environment differs from CI, not that the snapshot was stale.
+- **CSS module class names** were hashed from the _absolute_ file path, so
+  `apps\web\...` and `apps/web/...` produced different names — and those names
+  are baked into the shared-components bundle that consumers' snapshots record.
+  `packages/shared-components/vite.config.ts` now hashes a repository-relative
+  path with forward slashes. Verified by building the same commit on both
+  platforms: identical bundle, all 312 class names byte for byte.
 
-**One check still has to run on Linux:** `pnpm lint:fmt` varies with line endings
-and reports **every** file as misformatted on a Windows checkout (CRLF vs LF).
+  That config file is also listed in the `build` target's `inputs` in
+  `packages/shared-components/project.json`, and has to stay there. Nx caches the
+  build, and a config file that is not an input does not invalidate the cache: the
+  build replays a stale `dist/`, and a change to how class names are generated
+  appears to do nothing at all.
 
-Two others used to, and the fixes are worth knowing about because they are easy
-to undo by accident:
+- **Formatted dates** followed the machine timezone. Both runners now pin
+  `TZ=UTC` in their own config rather than relying on the caller.
 
-- **CSS module class names** were derived from the absolute file path, so Windows
-  and Linux produced different names (`_flex_190os_17` vs `_flex_4dswl_9`) for
-  identical source. They are baked into the `shared-components` bundle and reach
-  consumers' snapshots, so snapshots only matched on the platform that built the
-  package. `generateScopedName` in `packages/shared-components/vite.config.ts`
-  now hashes a repository-relative path with forward slashes.
+Some things still differ locally and are worth knowing:
 
-  That config is listed in the `build` target's `inputs` in
-  `packages/shared-components/project.json`. It has to be: Nx caches the build,
-  and a config change that is not an input does not invalidate the cache — the
-  build silently replays a stale `dist/` and the fix appears not to work.
+- `pnpm lint:fmt` on Windows reports **every** file as misformatted, because the
+  working tree is CRLF and oxfmt expects LF. That is the check misreading your
+  checkout, not something committed — ignore it locally and trust CI.
+- Some `Intl` tests assert English output, so on a non-English machine they fail
+  with e.g. `expected 'сьогодні' to be 'today'`. Run with `LC_ALL=C.UTF-8`.
+- Two inherited tests in `apps/desktop` assume POSIX path separators and so fail
+  on a Windows checkout: `src/utils.test.ts` › `tryPaths` expects `dir/dirB/` and
+  gets `dir\dirB/`, and `src/args.test.ts` › old Riot data dirs expects
+  `/Users/...` and gets `\Users\...`. They are upstream's and pass on CI, so are
+  left alone rather than patched — editing inherited test files earns a conflict
+  on every upstream sync.
+- `MatrixChat` › qr login completed fails on Windows too, deterministically. Not
+  the rebrand: it fails identically with `brand` reverted to `Element`, the
+  failing assertion (`importSecretsBundle` never called) involves no brand
+  string, and no commit in this fork touches `MatrixChat` or `Lifecycle`. Whether
+  it also fails on Linux is untested.
 
-- **Date formatting** followed the machine timezone, so regenerating the
-  `DateUtils` inline snapshots outside UTC rewrote the times (`"19:10"` became
-  `"17:10"`). Both runners now pin `TZ=UTC` themselves, in `vitest.config.ts` and
-  `apps/web/jest.config.ts`, rather than relying on the caller to set it.
+Read the diff before committing a regeneration. It should contain only what you
+expected to change; if class names or times move, something about the
+environment still differs from CI:
 
-## Tests that fail on Windows
-
-Two inherited desktop tests assume POSIX path separators and fail on a Windows
-checkout. They are upstream's, they pass on CI, and they are left alone so that
-syncing upstream does not conflict:
-
-| Test                                            | Expects       | Gets on Windows |
-| ----------------------------------------------- | ------------- | --------------- |
-| `apps/desktop/src/utils.test.ts` › `tryPaths`    | `dir/dirB/`   | `dir\dirB/`     |
-| `apps/desktop/src/args.test.ts` › old Riot dirs  | `/Users/...`  | `\Users\...`    |
-
-`MatrixChat` › qr login completed also fails locally, and `ForgotPassword` ›
-passwords-mismatch fails only under full-suite load. Neither is related to this
-fork — the qr test fails identically with `brand` reverted to `Element`, and no
-commit here touches `MatrixChat` or `Lifecycle`.
-
-Note the desktop tests need Electron downloaded (`node_modules/electron`), which
-a `--frozen-lockfile` install on a machine that skipped postinstall may not have.
-They fail to load entirely if it is missing.
+```bash
+git diff -U0 | grep -E "^[+-]" | grep -v "^[+-][+-]" | grep -viE "<what you changed>"
+```
 
 ## Brand name in tests
 
