@@ -3,7 +3,7 @@
 exports[`<RoomPredecessorTile /> Renders as expected 1`] = `
 <DocumentFragment>
   <div
-    class="_container_sq5fu_8 mx_EventTileBubble mx_CreateEvent"
+    class="_container_4f89f61d mx_EventTileBubble mx_CreateEvent"
   >
     <svg
       fill="currentColor"
@@ -17,12 +17,12 @@ exports[`<RoomPredecessorTile /> Renders as expected 1`] = `
       />
     </svg>
     <div
-      class="_title_sq5fu_34"
+      class="_title_4f89f61d"
     >
       This room is a continuation of another conversation.
     </div>
     <div
-      class="_subtitle_sq5fu_35"
+      class="_subtitle_4f89f61d"
     >
       <a
         href="https://matrix.to/#/old_room_id/$tombstone_event_id"

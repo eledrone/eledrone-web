@@ -27,7 +27,7 @@
         "docs:build": "vitepress build docs",
         "docs:preview": "vitepress preview docs",
         "test:unit": "nx run-many -t test:unit:prepare -p && vitest run",
-        "test:snapshots:update": "pnpm --filter element-web run test -- --ci -u && pnpm run test:unit -- -u",
+        "test:snapshots:update": "pnpm --filter element-web run test --ci -u && pnpm run test:unit -u",
         "coverage:diff": "diff-cover --config-file diff-cover.toml apps/web/coverage/lcov.info packages/shared-components/coverage/lcov.info coverage/lcov.info"
     },
     "devDependencies": {

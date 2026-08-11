@@ -86,7 +86,7 @@ exports[`<ResetIdentityPanel /> should display the 'forgot recovery key' variant
       </h2>
     </div>
     <div
-      class="_flex_4dswl_9 mx_EncryptionCard_emphasisedContent"
+      class="_flex_78451d87 mx_EncryptionCard_emphasisedContent"
       style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: normal; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-3x); --mx-flex-wrap: nowrap;"
     >
       <ul
@@ -271,7 +271,7 @@ exports[`<ResetIdentityPanel /> should display the 'sync failed' variant correct
       </h2>
     </div>
     <div
-      class="_flex_4dswl_9 mx_EncryptionCard_emphasisedContent"
+      class="_flex_78451d87 mx_EncryptionCard_emphasisedContent"
       style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: normal; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-3x); --mx-flex-wrap: nowrap;"
     >
       <ul
@@ -456,7 +456,7 @@ exports[`<ResetIdentityPanel /> should reset the encryption when the continue bu
       </h2>
     </div>
     <div
-      class="_flex_4dswl_9 mx_EncryptionCard_emphasisedContent"
+      class="_flex_78451d87 mx_EncryptionCard_emphasisedContent"
       style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: normal; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-3x); --mx-flex-wrap: nowrap;"
     >
       <ul
@@ -644,7 +644,7 @@ exports[`<ResetIdentityPanel /> should reset the encryption when the continue bu
       </h2>
     </div>
     <div
-      class="_flex_4dswl_9 mx_EncryptionCard_emphasisedContent"
+      class="_flex_78451d87 mx_EncryptionCard_emphasisedContent"
       style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: normal; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-3x); --mx-flex-wrap: nowrap;"
     >
       <ul
@@ -748,7 +748,7 @@ exports[`<ResetIdentityPanel /> should reset the encryption when the continue bu
          Reset in progress...
       </button>
       <div
-        class="_flex_4dswl_9 mx_EncryptionCard_emphasisedContent"
+        class="_flex_78451d87 mx_EncryptionCard_emphasisedContent"
         style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: normal; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-3x); --mx-flex-wrap: nowrap;"
       >
         <span

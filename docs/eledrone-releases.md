@@ -101,34 +101,57 @@ dependent on Element's signing and publishing setup.
 
 ## Regenerating snapshots and running the format check
 
-**Do these on Linux, not Windows.** Three checks in this repo produce
-platform-dependent output, so running them in the wrong place produces confident
-nonsense and, if committed, breaks CI:
-
-| Check                        | Varies by    | Symptom of running it on Windows                                                |
-| ---------------------------- | ------------ | ------------------------------------------------------------------------------- |
-| `pnpm lint:fmt`              | line endings | reports **every** file as misformatted (CRLF vs LF)                             |
-| jest / vitest snapshots      | file path    | rewrites CSS module class hashes, e.g. `_flex_4dswl_9` becomes `_flex_190os_17` |
-| `DateUtils` inline snapshots | timezone     | rewrites times to local, e.g. `"19:10"` becomes `"17:10"`                       |
-
-The CSS module hashes derive from the file path, and Windows uses backslashes.
-Regenerating snapshots there rewrites files that were already correct — the diff
-looks plausible and CI then fails on the same files it previously passed.
-
-So, to update snapshots:
+Snapshots regenerate identically on Windows and Linux, so do it wherever you are:
 
 ```bash
-# on a linux checkout, in apps/web
-TZ=UTC pnpm test --ci -u        # jest
-TZ=UTC pnpm test:unit -u        # vitest
+pnpm test:snapshots:update      # both suites, from the repository root
 ```
 
-`TZ=UTC` matches the runner. Without it, `vitest -u` rewrites the date inline
-snapshots in `DateUtils.test.ts` to whatever timezone the machine is in.
+That is `jest --ci -u` in `apps/web` followed by `vitest run -u` at the root; run
+either alone if you only need one.
 
 Afterwards, read the diff before committing. It should contain only what you
-expected to change; class name hashes or times moving is a sign the environment
-differs from CI, not that the snapshots were stale.
+expected to change — a snapshot moving for no reason you can name means something
+about the environment differs from CI, not that the snapshot was stale.
+
+**One check still has to run on Linux:** `pnpm lint:fmt` varies with line endings
+and reports **every** file as misformatted on a Windows checkout (CRLF vs LF).
+
+Two others used to, and the fixes are worth knowing about because they are easy
+to undo by accident:
+
+- **CSS module class names** were derived from the absolute file path, so Windows
+  and Linux produced different names (`_flex_190os_17` vs `_flex_4dswl_9`) for
+  identical source. They are baked into the `shared-components` bundle and reach
+  consumers' snapshots, so snapshots only matched on the platform that built the
+  package. `generateScopedName` in `packages/shared-components/vite.config.ts`
+  now hashes a repository-relative path with forward slashes.
+
+  That config is listed in the `build` target's `inputs` in
+  `packages/shared-components/project.json`. It has to be: Nx caches the build,
+  and a config change that is not an input does not invalidate the cache — the
+  build silently replays a stale `dist/` and the fix appears not to work.
+
+- **Date formatting** followed the machine timezone, so regenerating the
+  `DateUtils` inline snapshots outside UTC rewrote the times (`"19:10"` became
+  `"17:10"`). Both runners now pin `TZ=UTC` themselves, in `vitest.config.ts` and
+  `apps/web/jest.config.ts`, rather than relying on the caller to set it.
+
+## Tests that fail on Windows
+
+Two inherited desktop tests assume POSIX path separators and fail on a Windows
+checkout. They are upstream's, they pass on CI, and they are left alone so that
+syncing upstream does not conflict:
+
+| Test                                            | Expects       | Gets on Windows |
+| ----------------------------------------------- | ------------- | --------------- |
+| `apps/desktop/src/utils.test.ts` › `tryPaths`    | `dir/dirB/`   | `dir\dirB/`     |
+| `apps/desktop/src/args.test.ts` › old Riot dirs  | `/Users/...`  | `\Users\...`    |
+
+`MatrixChat` › qr login completed also fails locally, and `ForgotPassword` ›
+passwords-mismatch fails only under full-suite load. Neither is related to this
+fork — the qr test fails identically with `brand` reverted to `Element`, and no
+commit here touches `MatrixChat` or `Lifecycle`.
 
 Note the desktop tests need Electron downloaded (`node_modules/electron`), which
 a `--frozen-lockfile` install on a machine that skipped postinstall may not have.

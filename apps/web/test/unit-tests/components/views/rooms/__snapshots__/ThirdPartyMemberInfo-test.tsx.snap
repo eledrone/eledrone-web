@@ -47,15 +47,15 @@ exports[`<ThirdPartyMemberInfo /> should render invite 1`] = `
       </button>
     </div>
     <div
-      class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar"
+      class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar"
       tabindex="-1"
     >
       <div
-        class="_flex_4dswl_9 mx_ThirdPartyMemberInfo"
+        class="_flex_78451d87 mx_ThirdPartyMemberInfo"
         style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: start; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-4x); --mx-flex-wrap: nowrap;"
       >
         <section
-          class="_flex_4dswl_9"
+          class="_flex_78451d87"
           style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: start; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-2x); --mx-flex-wrap: nowrap;"
         >
           <span
@@ -124,15 +124,15 @@ exports[`<ThirdPartyMemberInfo /> should render invite when room in not availabl
       </button>
     </div>
     <div
-      class="_scrollbar_1d5jg_8 mx_AutoHideScrollbar"
+      class="_scrollbar_3d9be4f8 mx_AutoHideScrollbar"
       tabindex="-1"
     >
       <div
-        class="_flex_4dswl_9 mx_ThirdPartyMemberInfo"
+        class="_flex_78451d87 mx_ThirdPartyMemberInfo"
         style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: start; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-4x); --mx-flex-wrap: nowrap;"
       >
         <section
-          class="_flex_4dswl_9"
+          class="_flex_78451d87"
           style="--mx-flex-display: flex; --mx-flex-direction: column; --mx-flex-align: start; --mx-flex-justify: start; --mx-flex-gap: var(--cpd-space-2x); --mx-flex-wrap: nowrap;"
         >
           <span
