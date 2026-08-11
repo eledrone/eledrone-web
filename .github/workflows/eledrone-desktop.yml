@@ -124,11 +124,16 @@ jobs:
                   name: eledrone-${{ matrix.platform }}-${{ steps.version.outputs.version }}
                   retention-days: 14
                   if-no-files-found: error
+                  # The Squirrel installer is still built, just not shipped: it is
+                  # another ~181MB of the same app beside the 143MB MSI, and an
+                  # artifact downloads as one zip, so you pay for both to get either.
+                  # To ship it again, restore this line to the list below and the
+                  # matching row in the release notes table further down:
+                  #     apps/desktop/dist/squirrel-windows/*.exe
                   path: |
                       apps/desktop/dist/*.msi
                       apps/desktop/dist/*.deb
                       apps/desktop/dist/*.tar.gz
-                      apps/desktop/dist/squirrel-windows/*.exe
 
     release:
         needs: build
@@ -167,12 +172,15 @@ jobs:
                   name: eledrone v${{ steps.version.outputs.version }}
                   generate_release_notes: true
                   fail_on_unmatched_files: true
+                  # Row removed alongside the Squirrel installer in the upload step
+                  # above. Restore both together, or the notes advertise a file that
+                  # is not attached:
+                  #     | Windows installer (per user, no admin) | `Eledrone Setup *.exe` |
                   body: |
                       Desktop builds of eledrone for Windows and Linux.
 
                       | Platform | File |
                       |---|---|
-                      | Windows installer (per user, no admin) | `Eledrone Setup *.exe` |
                       | Windows installer (per machine) | `Eledrone *.msi` |
                       | Linux (Debian/Ubuntu) | `*.deb` |
                       | Linux (portable) | `*.tar.gz` |
