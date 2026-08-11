@@ -815,6 +815,15 @@ export class RoomView extends React.Component<IRoomProps, IRoomState> {
     };
 
     private onCallClose = (): void => {
+        // The call can close while the user is on their way to another room:
+        // this view is torn down and rebuilt on every room change, so for a
+        // moment we are still mounted for the room being left. Re-asserting our
+        // own room here would undo the navigation in progress and drop the user
+        // back where they started, which looks like the click never registered.
+        // There is also nothing to stop viewing at that point - the view we
+        // would be closing is already going away.
+        if (this.roomViewStore.getRoomId() !== this.state.roomId) return;
+
         // Stop viewing the call
         defaultDispatcher.dispatch<ViewRoomPayload>(
             {

@@ -67,6 +67,7 @@ import { MEGOLM_ENCRYPTION_ALGORITHM } from "../../../../src/utils/crypto";
 import MatrixClientContext from "../../../../src/contexts/MatrixClientContext";
 import { type ViewUserPayload } from "../../../../src/dispatcher/payloads/ViewUserPayload.ts";
 import { CallStore } from "../../../../src/stores/CallStore.ts";
+import { CallEvent } from "../../../../src/models/Call.ts";
 import MediaDeviceHandler, { MediaDeviceKindEnum } from "../../../../src/MediaDeviceHandler.ts";
 import Modal, { type ComponentProps } from "../../../../src/Modal.tsx";
 import ErrorDialog from "../../../../src/components/views/dialogs/ErrorDialog.tsx";
@@ -687,6 +688,73 @@ describe("RoomView", () => {
             // Opening the right panel again should just show the room summary
             act(() => stores.rightPanelStore.show(room.roomId));
             await findByRole(await screen.findByRole("complementary"), "heading", { name: room.roomId });
+        });
+
+        it("stops viewing the call when it closes while we are still in the room", async () => {
+            await mountRoomView();
+
+            await act(() =>
+                stores.roomViewStore.viewRoom({
+                    action: Action.ViewRoom,
+                    room_id: room.roomId,
+                    metricsTrigger: undefined,
+                    view_call: true,
+                }),
+            );
+            const call = CallStore.instance.getCall(room.roomId);
+            expect(call).not.toBeNull();
+
+            const dispatchSpy = jest.spyOn(defaultDispatcher, "dispatch").mockClear();
+            act(() => {
+                call!.emit(CallEvent.Close);
+            });
+
+            expect(dispatchSpy.mock.calls.map(([payload]) => payload)).toContainEqual(
+                expect.objectContaining({
+                    action: Action.ViewRoom,
+                    room_id: room.roomId,
+                    view_call: false,
+                }),
+            );
+            dispatchSpy.mockRestore();
+        });
+
+        it("does not pull the view back to this room when the call closes on the way out", async () => {
+            // A call room keeps its call around after we look away, which is
+            // what lets the view still be showing it when the call closes.
+            jest.spyOn(room, "isCallRoom").mockReturnValue(true);
+            const room2 = new Room(`!roomswitchtest:example.org`, cli, "@alice:example.org");
+            rooms.set(room2.roomId, room2);
+            await mountRoomView();
+
+            const call = CallStore.instance.getCall(room.roomId);
+            expect(call).not.toBeNull();
+
+            // The user clicks another room. This view is rebuilt per room, so
+            // for a moment it is still mounted for the room being left.
+            await act(() =>
+                stores.roomViewStore.viewRoom({
+                    action: Action.ViewRoom,
+                    room_id: room2.roomId,
+                    metricsTrigger: undefined,
+                }),
+            );
+            expect(stores.roomViewStore.getRoomId()).toBe(room2.roomId);
+            expect(CallStore.instance.getCall(room.roomId)).toBe(call);
+
+            // Anything that kills the widget - a lost persistence race, an error
+            // in the widget - closes the call. Re-asserting our own room here
+            // would undo the navigation and drop the user back where they
+            // started, as if the click had never registered.
+            const dispatchSpy = jest.spyOn(defaultDispatcher, "dispatch").mockClear();
+            act(() => {
+                call!.emit(CallEvent.Close);
+            });
+
+            expect(dispatchSpy.mock.calls.map(([payload]) => payload)).not.toContainEqual(
+                expect.objectContaining({ action: Action.ViewRoom, room_id: room.roomId }),
+            );
+            dispatchSpy.mockRestore();
         });
 
         it("hides the right panel chat when returning to a room that previously showed a call", async () => {

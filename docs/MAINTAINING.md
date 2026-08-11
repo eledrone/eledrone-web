@@ -20,13 +20,14 @@ fast-forwarding.
 
 ## Local changes
 
-| Area                     | Files                                                                                                                                                                    | Why                                                                                                                                                                                           |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Screen-share audio       | `apps/desktop/src/screenshareAudio.ts`, `ipc.ts`, `electron-main.ts`, `displayMediaCallback.ts`                                                                          | Upstream discards the `audio` field of every display-media request. See element-call#3657, element-web#29891                                                                                  |
-| Arch packaging           | `packaging/arch/`                                                                                                                                                        | Builds this fork directly                                                                                                                                                                     |
-| Docs-only pushes         | `.github/workflows/tests.yml`                                                                                                                                            | `paths-ignore` on `push`, so a documentation change does not run the suites. Four lines in the `on:` block                                                                                    |
-| Arch package             | `apps/desktop/electron-builder.ts`                                                                                                                                       | `pacman` added to `linux.target`, plus a `pacman.depends` list — the built-in default is stale for Arch                                                                                       |
-| Mic/camera join defaults | `apps/web/src/components/views/voip/CallDeviceDefaults.tsx`, `utils/call-device-defaults.ts`, `models/Call.ts`, `components/views/rooms/RoomListPanel/RoomListPanel.tsx` | Discord-style toggles at the foot of the room list saying how the next call is joined. Only the last two files are inherited, by two lines each — see [the write-up](call-device-defaults.md) |
+| Area                      | Files                                                                                                                                                                    | Why                                                                                                                                                                                                                                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Screen-share audio        | `apps/desktop/src/screenshareAudio.ts`, `ipc.ts`, `electron-main.ts`, `displayMediaCallback.ts`                                                                          | Upstream discards the `audio` field of every display-media request. See element-call#3657, element-web#29891                                                                                                                                                                          |
+| Arch packaging            | `packaging/arch/`                                                                                                                                                        | Builds this fork directly                                                                                                                                                                                                                                                             |
+| Docs-only pushes          | `.github/workflows/tests.yml`                                                                                                                                            | `paths-ignore` on `push`, so a documentation change does not run the suites. Four lines in the `on:` block                                                                                                                                                                            |
+| Arch package              | `apps/desktop/electron-builder.ts`                                                                                                                                       | `pacman` added to `linux.target`, plus a `pacman.depends` list — the built-in default is stale for Arch                                                                                                                                                                               |
+| Call survives room switch | `apps/web/src/models/Call.ts`, `components/views/elements/AppTile.tsx`, `components/structures/RoomView.tsx`                                                             | Changing room could hang the user up and bounce the view back. Upstream leaves a connected call's widget alive on a flag the widget sets asynchronously, and `RoomView` re-asserts its own room when a call closes. Worth offering upstream — see [the write-up](call-room-switch.md) |
+| Mic/camera join defaults  | `apps/web/src/components/views/voip/CallDeviceDefaults.tsx`, `utils/call-device-defaults.ts`, `models/Call.ts`, `components/views/rooms/RoomListPanel/RoomListPanel.tsx` | Discord-style toggles at the foot of the room list saying how the next call is joined. Only the last two files are inherited, by two lines each — see [the write-up](call-device-defaults.md)                                                                                         |
 
 ## Syncing with upstream
 
@@ -54,6 +55,11 @@ change wraps its callback. If that handler is restructured upstream, re-apply by
    exist before the page's `getDisplayMedia` resolves
 3. `setDisplayMediaCallback(callback, request.audioRequested)` must keep passing the flag
 
+The other spot is the widget and call lifecycle — `Call.ts`, `AppTile.tsx`, `RoomView.tsx` — which
+upstream is actively changing. Each of the three changes stands alone and
+[the write-up](call-room-switch.md) says what each one is for, so re-apply whichever still applies
+rather than the diff as a block.
+
 ## Building
 
 **Arch:**
@@ -69,10 +75,24 @@ Electron shell and symlinks its webapp from the web package.
 
 ```powershell
 corepack pnpm install
-cd apps/desktop
-corepack pnpm run fetch --noverify --cfgdir ""
+cd apps/web; corepack pnpm build                       # build THIS fork's webapp
+cd ../desktop
+cp element.io/release/config.json ../web/webapp/config.json
+corepack pnpm exec asar p ../web/webapp webapp.asar
 corepack pnpm run build
 ```
+
+Do **not** use `pnpm run fetch` here. It downloads upstream element-web's prebuilt
+tarball, so the installer would ship Element's branding rather than this fork's —
+the same reason the workflow builds the webapp itself. And `--cfgdir ""` skips the
+config file outright, which produces an app that starts up complaining the server
+configuration is missing.
+
+Copying `config.json` is not optional: `apps/web/config.json` is gitignored, so a
+clean checkout builds a webapp with no config, and the resulting installer cannot
+get past its first screen. If a local build has one anyway, it is a leftover in
+`apps/web/webapp/` from an earlier build — that directory is not cleaned, which is
+exactly how this went unnoticed.
 
 Artifacts land in `apps/desktop/dist/` (unpacked directory, MSI, and Squirrel installer). Unsigned,
 so SmartScreen warns on first run. Native modules (`hak`/seshat) are skipped — that only costs

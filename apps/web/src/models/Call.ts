@@ -280,6 +280,15 @@ export abstract class Call extends TypedEventEmitter<CallEvent, CallEventHandler
     protected setConnected(): void {
         this.room.on(RoomEvent.MyMembership, this.onMyMembership);
         window.addEventListener("beforeunload", this.beforeUnload);
+        // Claim persistence ourselves rather than waiting for the widget to ask
+        // for it. The widget does send set_always_on_screen when it joins, but
+        // that is a round trip we don't control the timing of, and persistence
+        // is what keeps the widget alive while it moves between the room view
+        // and the picture-in-picture container. Until it is set, changing room
+        // unmounts the only container the widget has, which stops its messaging
+        // and reads to us as the widget dying - i.e. a hangup the user never
+        // asked for. See onStopMessaging below.
+        ActiveWidgetStore.instance.setWidgetPersistence(this.widget.id, this.roomId, true);
         this.connectionState = ConnectionState.Connected;
     }
 
@@ -289,7 +298,15 @@ export abstract class Call extends TypedEventEmitter<CallEvent, CallEventHandler
     protected setDisconnected(): void {
         this.room.off(RoomEvent.MyMembership, this.onMyMembership);
         window.removeEventListener("beforeunload", this.beforeUnload);
+        // Order matters: stop counting as an active call first, then release the
+        // widget. Releasing it is what makes the UI drop the last container, and
+        // whoever tears that container down asks whether a call still needs the
+        // widget - by then, we don't, so it gets cleaned up rather than left
+        // running with nothing on screen.
         this.connectionState = ConnectionState.Disconnected;
+        // This is a no-op if some other widget has since taken the (single)
+        // persistence slot, so it can't tear down anyone else.
+        ActiveWidgetStore.instance.setWidgetPersistence(this.widget.id, this.roomId, false);
     }
 
     /**
