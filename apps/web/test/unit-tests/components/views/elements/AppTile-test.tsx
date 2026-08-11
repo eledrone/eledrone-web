@@ -39,6 +39,8 @@ import { ModuleRunner } from "../../../../../src/modules/ModuleRunner";
 import { ModuleApi } from "../../../../../src/modules/Api";
 import { RoomPermalinkCreator } from "../../../../../src/utils/permalinks/Permalinks";
 import { TestSDKContext } from "../../../TestSDKContext.ts";
+import { CallStore } from "../../../../../src/stores/CallStore";
+import { type Call } from "../../../../../src/models/Call";
 
 jest.mock("../../../../../src/stores/OwnProfileStore", () => ({
     OwnProfileStore: {
@@ -335,6 +337,43 @@ describe("AppTile", () => {
 
         expect(renderResult.getByText("Example 1")).toBeInTheDocument();
         expect(ActiveWidgetStore.instance.isLive("1", "r1")).toBe(true);
+    });
+
+    // Renders a tile for app1 with nothing docking or persisting the widget, so
+    // that this tile is the only thing left keeping it alive, and returns
+    // whether unmounting it tore the widget down.
+    const unmountLoneTileAndCheckTeardown = async (): Promise<boolean> => {
+        const destroyWidget = jest.spyOn(ActiveWidgetStore.instance, "destroyPersistentWidget");
+        jest.spyOn(ActiveWidgetStore.instance, "isLive").mockReturnValue(false);
+
+        const { unmount, queryByRole } = render(
+            <AppTile key={app1.id} app={app1} room={r1} />,
+            clientAndSDKContextRenderOptions(cli, sdkContext),
+        );
+        await waitForElementToBeRemoved(() => queryByRole("progressbar"));
+
+        // Other things destroy widgets while the tile is being set up, so only
+        // count what the unmount itself does.
+        const before = destroyWidget.mock.calls.length;
+        unmount();
+        return destroyWidget.mock.calls.length > before;
+    };
+
+    it("keeps a widget hosting a call we are connected to alive when its tile unmounts", async () => {
+        jest.spyOn(CallStore.instance, "getActiveCall").mockImplementation((roomId) =>
+            roomId === "r1" ? ({ widget: app1 } as unknown as Call) : null,
+        );
+
+        // Changing room hands a call widget from the room view to the
+        // picture-in-picture container, unmounting one tile before the other
+        // mounts. Tearing the widget down in that gap hangs up the call.
+        expect(await unmountLoneTileAndCheckTeardown()).toBe(false);
+    });
+
+    it("destroys a widget whose call we are not connected to when its tile unmounts", async () => {
+        jest.spyOn(CallStore.instance, "getActiveCall").mockReturnValue(null);
+
+        expect(await unmountLoneTileAndCheckTeardown()).toBe(true);
     });
 
     it("should hangup Jitsi call when room is left", async () => {

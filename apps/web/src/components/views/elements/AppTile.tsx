@@ -53,6 +53,7 @@ import { type ActionPayload } from "../../../dispatcher/payloads";
 import { Action } from "../../../dispatcher/actions";
 import { ElementWidgetCapabilities } from "../../../stores/widgets/ElementWidgetCapabilities";
 import { WidgetMessagingStore } from "../../../stores/widgets/WidgetMessagingStore";
+import { CallStore } from "../../../stores/CallStore";
 import { ModuleRunner } from "../../../modules/ModuleRunner";
 import { ModuleApi } from "../../../modules/Api";
 import { toWidgetDescriptor } from "../../../modules/WidgetLifecycleApi";
@@ -409,12 +410,7 @@ export default class AppTile extends React.Component<IProps, IState> {
         // Only tear down the widget if no other component is keeping it alive,
         // because we support moving widgets between containers, in which case
         // another component will keep it loaded throughout the transition
-        if (
-            !ActiveWidgetStore.instance.isLive(
-                this.props.app.id,
-                isAppWidget(this.props.app) ? this.props.app.roomId : null,
-            )
-        ) {
+        if (!this.isWidgetStillNeeded()) {
             this.endWidgetActions();
         }
 
@@ -427,6 +423,36 @@ export default class AppTile extends React.Component<IProps, IState> {
 
         SettingsStore.unwatchSetting(this.allowedWidgetsWatchRef);
         OwnProfileStore.instance.removeListener(UPDATE_EVENT, this.onUserReady);
+    }
+
+    /**
+     * Whether anything other than this tile still needs the widget to stay
+     * loaded, and so whether unmounting this tile should leave it running.
+     *
+     * Widgets move between containers - changing room hands a call widget from
+     * the room view to the picture-in-picture container - which unmounts one
+     * tile and mounts another, so a widget with no container for that instant
+     * is normal and must not be destroyed.
+     *
+     * {@link ActiveWidgetStore#isLive} covers that with a dock reference count
+     * plus the "always on screen" flag. But the picture-in-picture tile is in
+     * miniMode and so deliberately never docks, which leaves the flag as the
+     * only thing carrying a call widget across the hand-off - and only one
+     * widget may be persistent at a time, so any other widget claiming the slot
+     * silently drops it. Losing it mid-call tears down the widget: its
+     * messaging stops, {@link Call} reads that as the widget dying and hangs up
+     * a call the user is still in.
+     *
+     * So a call the user is connected to keeps its own widget alive on its own
+     * account, whatever the flag says.
+     */
+    private isWidgetStillNeeded(): boolean {
+        const roomId = isAppWidget(this.props.app) ? this.props.app.roomId : null;
+        if (ActiveWidgetStore.instance.isLive(this.props.app.id, roomId)) return true;
+        if (roomId === null) return false;
+
+        const call = CallStore.instance.getActiveCall(roomId);
+        return call !== null && call.widget.id === this.props.app.id;
     }
 
     private setupMessagingListeners(): void {

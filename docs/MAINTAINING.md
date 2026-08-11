@@ -20,12 +20,13 @@ fast-forwarding.
 
 ## Local changes
 
-| Area               | Files                                                                                           | Why                                                                                                          |
-| ------------------ | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Screen-share audio | `apps/desktop/src/screenshareAudio.ts`, `ipc.ts`, `electron-main.ts`, `displayMediaCallback.ts` | Upstream discards the `audio` field of every display-media request. See element-call#3657, element-web#29891 |
-| Arch packaging     | `packaging/arch/`                                                                               | Builds this fork directly                                                                                    |
-| Docs-only pushes   | `.github/workflows/tests.yml`                                                                   | `paths-ignore` on `push`, so a documentation change does not run the suites. Four lines in the `on:` block   |
-| Arch package       | `apps/desktop/electron-builder.ts`                                                              | `pacman` added to `linux.target`, plus a `pacman.depends` list — the built-in default is stale for Arch      |
+| Area                      | Files                                                                                                        | Why                                                                                                                                                                                                                                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Screen-share audio        | `apps/desktop/src/screenshareAudio.ts`, `ipc.ts`, `electron-main.ts`, `displayMediaCallback.ts`              | Upstream discards the `audio` field of every display-media request. See element-call#3657, element-web#29891                                                                                                                                                                          |
+| Arch packaging            | `packaging/arch/`                                                                                            | Builds this fork directly                                                                                                                                                                                                                                                             |
+| Docs-only pushes          | `.github/workflows/tests.yml`                                                                                | `paths-ignore` on `push`, so a documentation change does not run the suites. Four lines in the `on:` block                                                                                                                                                                            |
+| Arch package              | `apps/desktop/electron-builder.ts`                                                                           | `pacman` added to `linux.target`, plus a `pacman.depends` list — the built-in default is stale for Arch                                                                                                                                                                               |
+| Call survives room switch | `apps/web/src/models/Call.ts`, `components/views/elements/AppTile.tsx`, `components/structures/RoomView.tsx` | Changing room could hang the user up and bounce the view back. Upstream leaves a connected call's widget alive on a flag the widget sets asynchronously, and `RoomView` re-asserts its own room when a call closes. Worth offering upstream — see [the write-up](call-room-switch.md) |
 
 ## Syncing with upstream
 
@@ -44,7 +45,7 @@ tags produces a nonsense version.
 
 ### Where conflicts will show up
 
-Only four files are modified and three of them minimally, so conflicts should be rare. The likely
+Few files are modified and most of them minimally, so conflicts should be rare. The likely
 spot is `electron-main.ts` — upstream occasionally reworks `setDisplayMediaRequestHandler`, and our
 change wraps its callback. If that handler is restructured upstream, re-apply by hand:
 
@@ -52,6 +53,11 @@ change wraps its callback. If that handler is restructured upstream, re-apply by
 2. `prepareScreenshareAudio()` must resolve **before** `callback(...)` — the capture source has to
    exist before the page's `getDisplayMedia` resolves
 3. `setDisplayMediaCallback(callback, request.audioRequested)` must keep passing the flag
+
+The other spot is the widget and call lifecycle — `Call.ts`, `AppTile.tsx`, `RoomView.tsx` — which
+upstream is actively changing. Each of the three changes stands alone and
+[the write-up](call-room-switch.md) says what each one is for, so re-apply whichever still applies
+rather than the diff as a block.
 
 ## Building
 
