@@ -949,6 +949,36 @@ describe("ElementCall", () => {
             expect(call.connectionState).toBe(ConnectionState.Disconnected);
         });
 
+        it("keeps the widget on screen for as long as we are connected", async () => {
+            expect(ActiveWidgetStore.instance.getWidgetPersistence(call.widget.id, room.roomId)).toBe(false);
+
+            // Being connected is what keeps the widget alive while it moves
+            // between the room view and the picture-in-picture container, so we
+            // must not wait for the widget to ask for it: changing room in the
+            // meantime would leave it with no container and kill the call.
+            await connect(call, widgetApi);
+            expect(ActiveWidgetStore.instance.getWidgetPersistence(call.widget.id, room.roomId)).toBe(true);
+
+            await disconnect(call, widgetApi);
+            expect(ActiveWidgetStore.instance.getWidgetPersistence(call.widget.id, room.roomId)).toBe(false);
+        });
+
+        it("stops counting as an active call before releasing the widget", async () => {
+            await connect(call, widgetApi);
+
+            // Whoever tears down the last container asks whether a call still
+            // needs the widget, and is woken by the persistence change. If the
+            // call still looked connected at that point the widget would be
+            // left running with nothing on screen.
+            let connectedWhenReleased: boolean | undefined;
+            ActiveWidgetStore.instance.once(ActiveWidgetStoreEvent.Persistence, () => {
+                connectedWhenReleased = call.connected;
+            });
+            await disconnect(call, widgetApi);
+
+            expect(connectedWhenReleased).toBe(false);
+        });
+
         it("acknowledges mute_device widget action", async () => {
             await connect(call, widgetApi);
             const preventDefault = jest.fn();
