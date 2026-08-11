@@ -80,6 +80,13 @@ jobs:
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
+            # fpm builds the Arch package's .MTREE by shelling out to bsdtar, which
+            # is not on the Ubuntu runner. Without it fpm dies with exit 127 and the
+            # whole build fails - the deb and tar.gz never get written either.
+            - name: Install bsdtar, for the Arch package (Linux)
+              if: runner.os == 'Linux'
+              run: sudo apt-get update && sudo apt-get install -y libarchive-tools
+
             - name: Version
               id: version
               shell: bash
