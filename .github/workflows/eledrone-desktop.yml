@@ -107,8 +107,32 @@ jobs:
               shell: bash
               working-directory: apps/desktop
               run: |
+                  # The webapp needs a config.json, and `pnpm build` does not produce
+                  # one: apps/web/config.json is gitignored, so a clean checkout has
+                  # no config at all. Without it the installed app starts with no
+                  # default_server_config and refuses to go further, complaining that
+                  # the server configuration is missing.
+                  #
+                  # This is what `pnpm run fetch --cfgdir element.io/release` does at
+                  # the end of scripts/fetch-package.ts - copy the config in just
+                  # before packing. We build the webapp ourselves, so we copy it here.
+                  cp element.io/release/config.json ../web/webapp/config.json
+
                   pnpm exec asar p ../web/webapp webapp.asar
                   ls -la webapp.asar
+
+                  # A missing config only shows up when someone installs the build and
+                  # cannot get past the first screen, so assert it is in there.
+                  # asar lists with the platform separator, and this step runs on both
+                  # runners, so accept either.
+                  if ! pnpm exec asar l webapp.asar | grep -qE '^[\\/]config\.json$'; then
+                    echo "::error::config.json is not in webapp.asar - the build would ship without a default server"
+                    exit 1
+                  fi
+                  pnpm exec asar ef webapp.asar config.json
+                  echo "packed config.json begins:"
+                  head -c 200 config.json; echo
+                  rm -f config.json
 
             - name: Build the desktop app
               shell: bash

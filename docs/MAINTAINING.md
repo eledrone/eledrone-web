@@ -68,10 +68,24 @@ Electron shell and symlinks its webapp from the web package.
 
 ```powershell
 corepack pnpm install
-cd apps/desktop
-corepack pnpm run fetch --noverify --cfgdir ""
+cd apps/web; corepack pnpm build                       # build THIS fork's webapp
+cd ../desktop
+cp element.io/release/config.json ../web/webapp/config.json
+corepack pnpm exec asar p ../web/webapp webapp.asar
 corepack pnpm run build
 ```
+
+Do **not** use `pnpm run fetch` here. It downloads upstream element-web's prebuilt
+tarball, so the installer would ship Element's branding rather than this fork's —
+the same reason the workflow builds the webapp itself. And `--cfgdir ""` skips the
+config file outright, which produces an app that starts up complaining the server
+configuration is missing.
+
+Copying `config.json` is not optional: `apps/web/config.json` is gitignored, so a
+clean checkout builds a webapp with no config, and the resulting installer cannot
+get past its first screen. If a local build has one anyway, it is a leftover in
+`apps/web/webapp/` from an earlier build — that directory is not cleaned, which is
+exactly how this went unnoticed.
 
 Artifacts land in `apps/desktop/dist/` (unpacked directory, MSI, and Squirrel installer). Unsigned,
 so SmartScreen warns on first run. Native modules (`hak`/seshat) are skipped — that only costs
