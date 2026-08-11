@@ -137,10 +137,38 @@ const config: Omit<Writable<Configuration>, "electronFuses"> & {
         electron_protocol: variant.protocols[0],
     },
     linux: {
-        target: ["tar.gz", "deb"],
+        // eledrone local change: "pacman" added so CI produces an Arch package.
+        target: ["tar.gz", "deb", "pacman"],
         category: "Network;InstantMessaging;Chat",
         icon: "icon.png",
         executableName: variant.name, // element-desktop or element-desktop-nightly
+    },
+    /*
+     * eledrone local change.
+     *
+     * electron-builder's built-in pacman depends list is written for an Electron
+     * linked against system libraries, and has not kept up with Arch: it asks for
+     * libappindicator-gtk3, which left the official repositories, so pacman -U
+     * refuses to install with "target not found". It also lists Chromium's own
+     * dependencies (re2, snappy, minizip, libvpx...) which a bundled Electron does
+     * not use.
+     *
+     * This is the set an Electron binary actually needs on Arch. It is deliberately
+     * not the same as packaging/arch/PKGBUILD, which builds against the system
+     * electron package and therefore depends on that instead.
+     */
+    pacman: {
+        depends: [
+            "gtk3",
+            "nss",
+            "libnotify",
+            "libsecret",
+            "libxss",
+            "libxtst",
+            "at-spi2-core",
+            "alsa-lib",
+            "xdg-utils",
+        ],
     },
     deb: {
         packageCategory: "net",

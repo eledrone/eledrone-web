@@ -25,6 +25,7 @@ fast-forwarding.
 | Screen-share audio | `apps/desktop/src/screenshareAudio.ts`, `ipc.ts`, `electron-main.ts`, `displayMediaCallback.ts` | Upstream discards the `audio` field of every display-media request. See element-call#3657, element-web#29891 |
 | Arch packaging     | `packaging/arch/`                                                                               | Builds this fork directly                                                                                    |
 | Docs-only pushes   | `.github/workflows/tests.yml`                                                                   | `paths-ignore` on `push`, so a documentation change does not run the suites. Four lines in the `on:` block   |
+| Arch package       | `apps/desktop/electron-builder.ts`                                                              | `pacman` added to `linux.target`, plus a `pacman.depends` list — the built-in default is stale for Arch      |
 
 ## Syncing with upstream
 

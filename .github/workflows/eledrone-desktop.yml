@@ -124,7 +124,7 @@ jobs:
             - name: List what was produced
               shell: bash
               working-directory: apps/desktop
-              run: find dist -maxdepth 2 -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.deb' -o -name '*.tar.gz' \) -exec ls -lh {} \;
+              run: find dist -maxdepth 2 -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.deb' -o -name '*.pkg.tar.*' -o -name '*.tar.gz' \) -exec ls -lh {} \;
 
             - uses: actions/upload-artifact@v4
               with:
@@ -140,6 +140,7 @@ jobs:
                   path: |
                       apps/desktop/dist/*.msi
                       apps/desktop/dist/*.deb
+                      apps/desktop/dist/*.pkg.tar.*
                       apps/desktop/dist/*.tar.gz
 
     release:
@@ -190,7 +191,8 @@ jobs:
                       |---|---|
                       | Windows installer (per machine) | `Eledrone *.msi` |
                       | Linux (Debian/Ubuntu) | `*.deb` |
-                      | Linux (portable) | `*.tar.gz` |
+                      | Linux (Arch) | `*.pkg.tar.*`, install with `pacman -U` |
+                      | Linux (portable, any distro) | `*.tar.gz` |
 
                       These builds are **unsigned**, so Windows SmartScreen will warn on
                       first run, and local event search is unavailable because the native
