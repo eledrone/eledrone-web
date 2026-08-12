@@ -45,6 +45,7 @@ import { IPCManager } from "./IPCManager";
 import { _t } from "../../languageHandler";
 import { BadgeOverlayRenderer } from "../../favicon";
 import GenericToast from "../../components/views/toasts/GenericToast.tsx";
+import { type CssThemeSource } from "../../theming/CssThemeSource.ts";
 
 interface SquirrelUpdate {
     releaseNotes: string;
@@ -98,6 +99,8 @@ export default class ElectronPlatform extends BasePlatform {
     private config!: IConfigOptions;
     private supportedSettings?: Record<string, boolean>;
     private clientStartedPromiseWithResolvers = Promise.withResolvers<void>();
+    private readonly themeChangeListeners = new Set<() => void>();
+    private watchingThemes = false;
 
     public constructor() {
         super();
@@ -419,6 +422,37 @@ export default class ElectronPlatform extends BasePlatform {
 
     public getEventIndexingManager(): BaseEventIndexManager | null {
         return this.eventIndexManager;
+    }
+
+    /**
+     * The themes folder in the user data directory, which the main process
+     * both serves and watches: saving a stylesheet there re-applies it here
+     * without a restart.
+     *
+     * The renderer keeps no copy - it asks for the lot whenever anything
+     * changes - so the folder is always the truth about what themes exist.
+     */
+    public getCssThemeSource(): CssThemeSource {
+        return {
+            canReveal: true,
+            list: () => this.ipc.call("getThemes"),
+            write: (fileName: string, css: string) => this.ipc.call("writeTheme", fileName, css),
+            remove: (fileName: string) => this.ipc.call("deleteTheme", fileName),
+            reveal: () => this.ipc.call("openThemesDirectory"),
+            watch: (onChange: () => void) => {
+                // The preload bridge can subscribe to a channel but not
+                // unsubscribe from one, so there is exactly one listener for
+                // the app's lifetime and callers come and go behind it.
+                this.themeChangeListeners.add(onChange);
+                if (!this.watchingThemes) {
+                    this.watchingThemes = true;
+                    this.electron.on("themesChanged", () => {
+                        for (const listener of this.themeChangeListeners) listener();
+                    });
+                }
+                return () => this.themeChangeListeners.delete(onChange);
+            },
+        };
     }
 
     public async setLanguage(preferredLangs: string[]): Promise<any> {

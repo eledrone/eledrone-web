@@ -147,6 +147,147 @@ exports[`AppearanceUserSettingsTab should render 1`] = `
           </div>
           <div
             class="mx_SettingsSubsection mx_SettingsSubsection_newUi"
+            data-testid="eledroneCssThemes"
+          >
+            <div
+              class="mx_SettingsSubsectionHeading"
+            >
+              <h2
+                class="mx_Heading_h4 mx_SettingsSubsectionHeading_heading"
+              >
+                CSS themes
+              </h2>
+            </div>
+            <div
+              class="mx_SettingsSubsection_description"
+            >
+              <div
+                class="mx_SettingsSubsection_text"
+              >
+                Imported stylesheets are kept in this browser, on this device only.
+              </div>
+            </div>
+            <div
+              class="mx_SettingsSubsection_content mx_SettingsSubsection_content_newUi"
+            >
+              <div
+                class="mx_EledroneThemePanel_actions"
+              >
+                <button
+                  class="_button_1nw83_8"
+                  data-kind="secondary"
+                  data-size="md"
+                  role="button"
+                  tabindex="0"
+                >
+                  Import…
+                </button>
+                <input
+                  accept=".css,text/css"
+                  aria-label="Import…"
+                  class="mx_EledroneThemePanel_fileInput"
+                  multiple=""
+                  type="file"
+                />
+              </div>
+              <div
+                class="mx_EledroneThemePanel_empty"
+              >
+                No stylesheets yet.
+              </div>
+            </div>
+            <div
+              class="_separator_13qwf_8"
+              data-kind="primary"
+              data-orientation="horizontal"
+              role="separator"
+            />
+          </div>
+          <div
+            class="mx_SettingsSubsection mx_SettingsSubsection_newUi"
+            data-testid="eledroneColours"
+          >
+            <div
+              class="mx_SettingsSubsectionHeading"
+            >
+              <h2
+                class="mx_Heading_h4 mx_SettingsSubsectionHeading_heading"
+              >
+                Colours
+              </h2>
+            </div>
+            <div
+              class="mx_SettingsSubsection_description"
+            >
+              <div
+                class="mx_SettingsSubsection_text"
+              >
+                Recolours the app. Used only while no CSS theme is applied.
+              </div>
+            </div>
+            <div
+              class="mx_SettingsSubsection_content mx_SettingsSubsection_content_newUi"
+            >
+              <div
+                class="mx_EledroneThemePanel_colour"
+              >
+                <label
+                  class="mx_EledroneThemePanel_colourLabel"
+                >
+                  Accent
+                  <input
+                    class="mx_EledroneThemePanel_swatch"
+                    type="color"
+                    value="#0dbd8b"
+                  />
+                </label>
+                <button
+                  aria-disabled="true"
+                  aria-label="Reset Accent to the default"
+                  class="_button_1nw83_8"
+                  data-kind="tertiary"
+                  data-size="md"
+                  role="button"
+                  tabindex="0"
+                >
+                  Reset
+                </button>
+              </div>
+              <div
+                class="mx_EledroneThemePanel_colour"
+              >
+                <label
+                  class="mx_EledroneThemePanel_colourLabel"
+                >
+                  Background tint
+                  <input
+                    class="mx_EledroneThemePanel_swatch"
+                    type="color"
+                    value="#101317"
+                  />
+                </label>
+                <button
+                  aria-disabled="true"
+                  aria-label="Reset Background tint to the default"
+                  class="_button_1nw83_8"
+                  data-kind="tertiary"
+                  data-size="md"
+                  role="button"
+                  tabindex="0"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+            <div
+              class="_separator_13qwf_8"
+              data-kind="primary"
+              data-orientation="horizontal"
+              role="separator"
+            />
+          </div>
+          <div
+            class="mx_SettingsSubsection mx_SettingsSubsection_newUi"
             data-testid="layoutPanel"
           >
             <div

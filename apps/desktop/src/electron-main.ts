@@ -41,6 +41,7 @@ import { _t, AppLocalization } from "./language-helper.js";
 import { setDisplayMediaCallback } from "./displayMediaCallback.js";
 import { prepareScreenshareAudio, setupScreenshareAudio, teardownScreenshareAudio } from "./screenshareAudio.js";
 import { setupMacosTitleBar } from "./macos-titlebar.js";
+import { watchThemes } from "./themes.js";
 import { setupMediaAuth } from "./media-auth.js";
 import { type RendererRecovery, setupRendererRecovery } from "./renderer-recovery.js";
 import { getBuildConfig } from "./build-config.js";
@@ -294,6 +295,11 @@ app.on("ready", async () => {
     if (process.platform === "darwin") {
         setupMacosTitleBar(global.mainWindow);
     }
+
+    // Editing a stylesheet in the themes folder re-applies it in the running
+    // app, which is the whole point of the folder existing: the edit loop is
+    // save-and-look, not save-and-restart.
+    watchThemes(() => global.mainWindow?.webContents.send("themesChanged"));
 
     // Handle spellchecker
     // For some reason spellCheckerEnabled isn't persisted, so we have to use the store here

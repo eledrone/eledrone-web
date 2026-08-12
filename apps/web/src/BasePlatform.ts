@@ -33,6 +33,7 @@ import { type IConfigOptions } from "./IConfigOptions";
 import SdkConfig from "./SdkConfig";
 import { buildAndEncodePickleKey, encryptPickleKey } from "./utils/tokens/pickling";
 import Favicon from "./favicon.ts";
+import { type CssThemeSource } from "./theming/CssThemeSource.ts";
 import { getVectorConfig } from "./vector/getconfig.ts";
 
 export const SSO_HOMESERVER_URL_KEY = "mx_sso_hs_url";
@@ -283,6 +284,16 @@ export default abstract class BasePlatform {
      * can be null if the platform doesn't support event indexing.
      */
     public getEventIndexingManager(): BaseEventIndexManager | null {
+        return null;
+    }
+
+    /**
+     * Where this platform keeps the user's CSS themes, if it has somewhere
+     * better than the browser's own storage - a folder on disk, say.
+     *
+     * @returns the source, or null to use the browser fallback.
+     */
+    public getCssThemeSource(): CssThemeSource | null {
         return null;
     }
 

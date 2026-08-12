@@ -355,6 +355,9 @@ export interface Settings {
     "audioInputMuted": IBaseSetting<boolean>;
     "videoInputMuted": IBaseSetting<boolean>;
     "activeCallRoomIds": IBaseSetting<string[]>;
+    "eledroneCssThemes": IBaseSetting<string[]>;
+    "eledroneAccentColour": IBaseSetting<string | null>;
+    "eledroneSurfaceColour": IBaseSetting<string | null>;
     "releaseAnnouncementData": IBaseSetting<ReleaseAnnouncementData>;
     "Electron.autoLaunch": IBaseSetting<"enabled" | "minimised" | "disabled">;
     "Electron.warnBeforeExit": IBaseSetting<boolean>;
@@ -1329,6 +1332,29 @@ export const SETTINGS: Settings = {
         default: [],
         // Contains room IDs
         shouldExportToRageshake: false,
+    },
+    /**
+     * The file names of the CSS themes the user has switched on, in the order
+     * they are applied. Device-only: on desktop these name files in a folder
+     * on this machine, which another device has no way to have.
+     * See {@link EledroneThemeStore}.
+     */
+    "eledroneCssThemes": {
+        supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS,
+        default: [],
+    },
+    /**
+     * The accent and background colours of the built-in colour switcher, as
+     * `#rrggbb`, or null for Compound's own. A CSS theme overrides them token
+     * by token rather than wholesale - see {@link EledroneThemeStore}.
+     */
+    "eledroneAccentColour": {
+        supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS,
+        default: null,
+    },
+    "eledroneSurfaceColour": {
+        supportedLevels: LEVELS_DEVICE_ONLY_SETTINGS,
+        default: null,
     },
     /**
      * Managed by the {@link ReleaseAnnouncementStore}

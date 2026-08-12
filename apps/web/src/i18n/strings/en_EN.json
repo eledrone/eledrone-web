@@ -2442,8 +2442,24 @@
         "always_show_message_timestamps": "Always show message timestamps",
         "appearance": {
             "bundled_emoji_font": "Use bundled emoji font",
+            "colours": {
+                "accent": "Accent",
+                "heading": "Colours",
+                "help": "Recolours the app. A CSS theme overrides these wherever it sets a colour of its own.",
+                "reset_label": "Reset %(colour)s to the default",
+                "surface": "Background tint"
+            },
             "compact_layout": "Show compact text and messages",
             "compact_layout_description": "Modern layout must be selected to use this feature.",
+            "css_themes": {
+                "empty": "No stylesheets yet.",
+                "folder_help": "Stylesheets in %(directory)s. Saving one there applies it straight away.",
+                "heading": "CSS themes",
+                "import": "Import…",
+                "import_failed": "Could not import that stylesheet: %(message)s",
+                "open_folder": "Open folder",
+                "storage_help": "Imported stylesheets are kept in this browser, on this device only."
+            },
             "custom_font": "Use a system font",
             "custom_font_description": "Set the name of a font installed on your system & %(brand)s will attempt to use it.",
             "custom_font_name": "System font name",
