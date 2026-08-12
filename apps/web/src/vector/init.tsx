@@ -21,6 +21,7 @@ import SettingsStore from "../settings/SettingsStore";
 import PlatformPeg from "../PlatformPeg";
 import SdkConfig from "../SdkConfig";
 import { setTheme } from "../theme";
+import { ThemeStore } from "../theming/ThemeStore";
 import { ModuleRunner } from "../modules/ModuleRunner";
 import type MatrixChat from "../components/structures/MatrixChat";
 import ElectronPlatform from "./platform/ElectronPlatform";
@@ -84,7 +85,13 @@ export async function loadLanguage(): Promise<void> {
 }
 
 export async function loadTheme(): Promise<void> {
-    return setTheme();
+    await setTheme();
+    // The fork's own layer on top of light and dark: the user's CSS themes and
+    // the colour switcher. Started here rather than with the app so the window
+    // is painted in the user's colours the first time, not repainted into them
+    // a moment later; a themes folder that cannot be read only logs, so this
+    // never keeps the app from starting.
+    await ThemeStore.instance.start();
 }
 
 export async function loadApp(urlParams: URLParams): Promise<void> {

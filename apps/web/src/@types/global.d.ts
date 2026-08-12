@@ -58,7 +58,8 @@ type ElectronChannel =
     | "userAccessToken"
     | "homeserverUrl"
     | "serverSupportedVersions"
-    | "showToast";
+    | "showToast"
+    | "themesChanged";
 
 declare global {
     // use `number` as the return type in all cases for globalThis.set{Interval,Timeout},

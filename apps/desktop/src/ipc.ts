@@ -16,6 +16,7 @@ import {
 } from "./displayMediaCallback.js";
 import Store, { clearDataAndRelaunch } from "./store.js";
 import { getConfig } from "./config.js";
+import { deleteTheme, getThemesDirectory, listThemes, openThemesDirectory, writeTheme } from "./themes.js";
 
 let focusHandlerAttached = false;
 ipcMain.on("loudNotification", function (): void {
@@ -159,6 +160,43 @@ ipcMain.on("ipcCall", async function (_ev: IpcMainEvent, payload) {
             });
             setDisplayMediaCallback(null);
             ret = null;
+            break;
+
+        // The CSS themes the user has dropped in their themes folder. The
+        // renderer holds no copy of them - the folder is the only source - so
+        // it asks for the lot each time and re-applies what it is given.
+        //
+        // These touch the file system on names that came from the renderer, so
+        // unlike the calls above they can genuinely fail. An unhandled
+        // rejection here would leave the renderer's promise pending forever,
+        // so failures are sent back as errors for it to show.
+        case "getThemes":
+        case "writeTheme":
+        case "deleteTheme":
+        case "openThemesDirectory":
+            try {
+                switch (payload.name) {
+                    case "getThemes":
+                        ret = { directory: getThemesDirectory(), themes: await listThemes() };
+                        break;
+                    case "writeTheme":
+                        await writeTheme(args[0], args[1]);
+                        break;
+                    case "deleteTheme":
+                        await deleteTheme(args[0]);
+                        break;
+                    case "openThemesDirectory":
+                        await openThemesDirectory();
+                        break;
+                }
+            } catch (e) {
+                console.error(`Theme IPC call ${payload.name} failed`, e);
+                global.mainWindow.webContents.send("ipcReply", {
+                    id: payload.id,
+                    error: { message: e instanceof Error ? e.message : String(e) },
+                });
+                return;
+            }
             break;
 
         case "clearStorage":

@@ -1,0 +1,93 @@
+/*
+Copyright 2026 Element Creations Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR GPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+.mx_ThemePanel_actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--cpd-space-2x);
+}
+
+/*
+ * The file picker is driven by the Import button beside it, so the browser's
+ * own control never appears. Hidden with clip rather than display:none because
+ * a display:none input cannot be opened by clicking it from script in every
+ * browser, and this one is opened exactly that way.
+ */
+.mx_ThemePanel_fileInput {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.mx_ThemePanel_themes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--cpd-space-1x);
+}
+
+.mx_ThemePanel_theme {
+    display: flex;
+    align-items: center;
+    gap: var(--cpd-space-2x);
+
+    /* The name takes the width, so the delete button keeps its own */
+    .mx_ThemePanel_themeField {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+}
+
+.mx_ThemePanel_empty,
+.mx_ThemePanel_error {
+    font: var(--cpd-font-body-sm-regular);
+}
+
+.mx_ThemePanel_empty {
+    color: var(--cpd-color-text-secondary);
+}
+
+.mx_ThemePanel_error {
+    color: var(--cpd-color-text-critical-primary);
+}
+
+.mx_ThemePanel_colour {
+    display: flex;
+    align-items: center;
+    gap: var(--cpd-space-3x);
+}
+
+.mx_ThemePanel_colourLabel {
+    display: flex;
+    align-items: center;
+    gap: var(--cpd-space-2x);
+    flex: 1 1 auto;
+    font: var(--cpd-font-body-md-medium);
+    color: var(--cpd-color-text-primary);
+}
+
+/*
+ * A native colour input, which every platform draws differently and none of
+ * them small. Sized and framed here so it reads as a swatch in a settings row
+ * rather than as a button with a colour in it.
+ */
+.mx_ThemePanel_swatch {
+    inline-size: 40px;
+    block-size: 28px;
+    padding: 2px;
+    border: 1px solid var(--cpd-color-border-interactive-secondary);
+    border-radius: var(--cpd-space-1x);
+    background: var(--cpd-color-bg-canvas-default);
+    cursor: pointer;
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+}

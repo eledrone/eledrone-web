@@ -34,6 +34,7 @@ const CHANNELS = [
     "homeserverUrl",
     "serverSupportedVersions",
     "showToast",
+    "themesChanged",
 ];
 
 contextBridge.exposeInMainWorld("electron", {

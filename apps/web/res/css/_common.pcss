@@ -44,12 +44,54 @@ Please see LICENSE files in the repository root for full details.
     /* This is required to ensure Compound tooltips correctly draw where they should with z-index: auto */
     contain: strict;
 }
-#mx_ContextualMenu_Container,
+/**
+ * The containers appended to <body>, and the order they are meant to stack in.
+ *
+ * Each is its own stacking context - the isolation is what makes Compound
+ * tooltips draw where they should - and #matrixchat is `contain: strict`, so
+ * nothing rendered inside the app can paint above any of them however high a
+ * z-index it gives itself. Without a z-index of their own they stack in the
+ * order they happened to be created, which made "is the dialog above the call
+ * widget" depend on which the user opened first.
+ *
+ * They are pinned to a zero-sized fixed box so that a z-index applies at all.
+ * Nothing inside them moves: dialogs and context menus position themselves
+ * against the viewport with `position: fixed`, and a persisted element is
+ * absolute against a box that sits at the viewport's origin either way.
+ */
 #mx_PersistedElement_container,
+#mx_ToastContainer_container,
+#mx_ContextualMenu_Container,
 #mx_Dialog_Container,
 #mx_Dialog_StaticContainer {
-    /* This is required to ensure Compound tooltips correctly draw where they should with z-index: auto */
     isolation: isolate;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+}
+
+/* A call, floating over the app it is no longer the foreground of */
+#mx_PersistedElement_container {
+    z-index: 1;
+}
+
+/* Toasts ask for something - verify this device, an incoming call - so they
+   have to be readable over whatever is already floating */
+#mx_ToastContainer_container {
+    z-index: 2;
+}
+
+/* A modal is modal: it covers the toasts it can only be answered after */
+#mx_Dialog_Container,
+#mx_Dialog_StaticContainer {
+    z-index: 3;
+}
+
+/* Menus open from within all of the above, including from inside a dialog */
+#mx_ContextualMenu_Container {
+    z-index: 4;
 }
 
 /**

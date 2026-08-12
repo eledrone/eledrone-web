@@ -33,6 +33,7 @@ import { type IConfigOptions } from "./IConfigOptions";
 import SdkConfig from "./SdkConfig";
 import { buildAndEncodePickleKey, encryptPickleKey } from "./utils/tokens/pickling";
 import Favicon from "./favicon.ts";
+import { type CssThemeSource, StoredCssThemeSource } from "./theming/CssThemeSource.ts";
 import { getVectorConfig } from "./vector/getconfig.ts";
 
 export const SSO_HOMESERVER_URL_KEY = "mx_sso_hs_url";
@@ -284,6 +285,16 @@ export default abstract class BasePlatform {
      */
     public getEventIndexingManager(): BaseEventIndexManager | null {
         return null;
+    }
+
+    /**
+     * Where this platform keeps the user's CSS themes.
+     *
+     * Browser storage unless a platform has somewhere better - a folder on
+     * disk, say - which is what the desktop app overrides this for.
+     */
+    public getCssThemeSource(): CssThemeSource {
+        return new StoredCssThemeSource();
     }
 
     public setLanguage(preferredLangs: string[]): void {}

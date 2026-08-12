@@ -8,7 +8,12 @@ Please see LICENSE files in the repository root for full details.
 */
 
 .mx_ToastContainer {
-    position: absolute;
+    /* Fixed rather than absolute because the container this is portalled into
+       is a zero-sized box - see the stacking order in _common.pcss. Absolute
+       would shrink-to-fit against that nothing and leave the toast a stripe a
+       few characters wide. The coordinates are unchanged: the box it used to
+       be positioned against sat at the viewport's origin too. */
+    position: fixed;
     top: 12px;
     left: 62px;
     z-index: 101;
