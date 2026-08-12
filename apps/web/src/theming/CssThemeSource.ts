@@ -61,7 +61,7 @@ export interface CssThemeSource {
 }
 
 /** Where the browser fallback keeps its themes. Its own key, not part of the settings blob. */
-const STORAGE_KEY = "mx_eledrone_css_themes";
+const STORAGE_KEY = "mx_css_themes";
 
 /**
  * A ceiling on the lot, well inside the ~5MB an origin gets. Local storage

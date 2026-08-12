@@ -16,7 +16,7 @@ import SettingsStore from "../../../settings/SettingsStore";
 import { SettingLevel } from "../../../settings/SettingLevel";
 import { useSettingValue } from "../../../hooks/useSettings";
 import { useEventEmitterState } from "../../../hooks/useEventEmitter";
-import { EledroneThemeEvent, EledroneThemeStore } from "../../../theming/EledroneThemeStore";
+import { ThemeEvent, ThemeStore } from "../../../theming/ThemeStore";
 
 /** Compound's own accent, which is what "nothing chosen" looks like in the picker. */
 const DEFAULT_ACCENT = "#0dbd8b";
@@ -31,7 +31,7 @@ const DEFAULT_SURFACE = "#101317";
  * Sits below the light/dark chooser rather than replacing it, because it does
  * not replace it - a CSS theme is written against one or the other.
  */
-export function EledroneThemePanel(): JSX.Element {
+export function ThemePanel(): JSX.Element {
     return (
         <>
             <CssThemes />
@@ -41,11 +41,11 @@ export function EledroneThemePanel(): JSX.Element {
 }
 
 /** Re-renders whenever the set of themes changes, and hands back the store. */
-function useThemeStore(): EledroneThemeStore {
-    const store = EledroneThemeStore.instance;
+function useThemeStore(): ThemeStore {
+    const store = ThemeStore.instance;
     // The value is the themes themselves: a new array each time, so a file
     // saved in the folder repaints this list.
-    useEventEmitterState(store, EledroneThemeEvent.Update, () => store.themes);
+    useEventEmitterState(store, ThemeEvent.Update, () => store.themes);
     return store;
 }
 
@@ -53,7 +53,7 @@ function CssThemes(): JSX.Element {
     const store = useThemeStore();
     // Subscribed to here, so switching one on repaints the list, but read
     // through the store, which is where a garbled setting is made sense of.
-    useSettingValue("eledroneCssThemes");
+    useSettingValue("cssThemes");
     const enabled = store.enabledThemeNames;
     const [error, setError] = useState<string>();
     const fileInput = useRef<HTMLInputElement>(null);
@@ -86,9 +86,9 @@ function CssThemes(): JSX.Element {
                     : _t("settings|appearance|css_themes|storage_help")
             }
             legacy={false}
-            data-testid="eledroneCssThemes"
+            data-testid="cssThemes"
         >
-            <div className="mx_EledroneThemePanel_actions">
+            <div className="mx_ThemePanel_actions">
                 {store.canRevealDirectory && (
                     <Button kind="secondary" size="md" Icon={FolderIcon} onClick={() => void store.reveal()}>
                         {_t("settings|appearance|css_themes|open_folder")}
@@ -99,7 +99,7 @@ function CssThemes(): JSX.Element {
                 </Button>
                 <input
                     ref={fileInput}
-                    className="mx_EledroneThemePanel_fileInput"
+                    className="mx_ThemePanel_fileInput"
                     type="file"
                     accept=".css,text/css"
                     multiple
@@ -109,19 +109,19 @@ function CssThemes(): JSX.Element {
             </div>
 
             {error && (
-                <div className="mx_EledroneThemePanel_error">
+                <div className="mx_ThemePanel_error">
                     {_t("settings|appearance|css_themes|import_failed", { message: error })}
                 </div>
             )}
 
             {store.themes.length === 0 ? (
-                <div className="mx_EledroneThemePanel_empty">{_t("settings|appearance|css_themes|empty")}</div>
+                <div className="mx_ThemePanel_empty">{_t("settings|appearance|css_themes|empty")}</div>
             ) : (
-                <Root className="mx_EledroneThemePanel_themes">
+                <Root className="mx_ThemePanel_themes">
                     {store.themes.map((theme) => (
-                        <div key={theme.fileName} className="mx_EledroneThemePanel_theme">
+                        <div key={theme.fileName} className="mx_ThemePanel_theme">
                             <InlineField
-                                className="mx_EledroneThemePanel_themeField"
+                                className="mx_ThemePanel_themeField"
                                 name={theme.fileName}
                                 control={
                                     <ToggleControl
@@ -170,12 +170,12 @@ interface ColourFieldProps {
  */
 function ColourField({ label, value, fallback, onChange }: ColourFieldProps): JSX.Element {
     return (
-        <div className="mx_EledroneThemePanel_colour">
-            <label className="mx_EledroneThemePanel_colourLabel">
+        <div className="mx_ThemePanel_colour">
+            <label className="mx_ThemePanel_colourLabel">
                 {label}
                 <input
                     type="color"
-                    className="mx_EledroneThemePanel_swatch"
+                    className="mx_ThemePanel_swatch"
                     value={value ?? fallback}
                     onChange={(event) => onChange(event.target.value)}
                 />
@@ -197,10 +197,10 @@ function ColourField({ label, value, fallback, onChange }: ColourFieldProps): JS
 const asColour = (stored: unknown): string | null => (typeof stored === "string" ? stored : null);
 
 function PaletteColours(): JSX.Element {
-    const accent = asColour(useSettingValue("eledroneAccentColour"));
-    const surface = asColour(useSettingValue("eledroneSurfaceColour"));
+    const accent = asColour(useSettingValue("accentColour"));
+    const surface = asColour(useSettingValue("surfaceColour"));
 
-    const set = useCallback((setting: "eledroneAccentColour" | "eledroneSurfaceColour", colour: string | null) => {
+    const set = useCallback((setting: "accentColour" | "surfaceColour", colour: string | null) => {
         void SettingsStore.setValue(setting, null, SettingLevel.DEVICE, colour);
     }, []);
 
@@ -209,19 +209,19 @@ function PaletteColours(): JSX.Element {
             heading={_t("settings|appearance|colours|heading")}
             description={_t("settings|appearance|colours|help")}
             legacy={false}
-            data-testid="eledroneColours"
+            data-testid="themeColours"
         >
             <ColourField
                 label={_t("settings|appearance|colours|accent")}
                 value={accent}
                 fallback={DEFAULT_ACCENT}
-                onChange={(colour) => set("eledroneAccentColour", colour)}
+                onChange={(colour) => set("accentColour", colour)}
             />
             <ColourField
                 label={_t("settings|appearance|colours|surface")}
                 value={surface}
                 fallback={DEFAULT_SURFACE}
-                onChange={(colour) => set("eledroneSurfaceColour", colour)}
+                onChange={(colour) => set("surfaceColour", colour)}
             />
         </SettingsSubsection>
     );

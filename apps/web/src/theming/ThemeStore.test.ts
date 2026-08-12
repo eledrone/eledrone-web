@@ -9,32 +9,32 @@ Please see LICENSE files in the repository root for full details.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { EledroneThemeStore } from "./EledroneThemeStore";
-import { type CssThemeListing, type CssThemeSource } from "./CssThemeSource";
+import { ThemeStore } from "./ThemeStore";
+import { type CssThemeListing, type CssThemeSource, StoredCssThemeSource } from "./CssThemeSource";
 import SettingsStore from "../settings/SettingsStore";
 import { SettingLevel } from "../settings/SettingLevel";
 import PlatformPeg from "../PlatformPeg";
 import type BasePlatform from "../BasePlatform";
 
-const store = EledroneThemeStore.instance;
+const store = ThemeStore.instance;
 
 const appliedThemeNames = (): string[] =>
-    [...document.querySelectorAll("style[data-eledrone-css-theme]")].map((style) =>
-        style.getAttribute("data-eledrone-css-theme")!,
+    [...document.querySelectorAll("style[data-css-theme]")].map((style) =>
+        style.getAttribute("data-css-theme")!,
     );
 
 const appliedThemeCss = (): string =>
-    [...document.querySelectorAll("style[data-eledrone-css-theme]")].map((style) => style.textContent).join("\n");
+    [...document.querySelectorAll("style[data-css-theme]")].map((style) => style.textContent).join("\n");
 
-const appliedPalette = (): string | null => document.querySelector("style[data-eledrone-palette]")?.textContent ?? null;
+const appliedPalette = (): string | null => document.querySelector("style[data-css-palette]")?.textContent ?? null;
 
 const frameThemeCss = (frame: HTMLIFrameElement): string =>
-    [...(frame.contentDocument?.querySelectorAll("style[data-eledrone-css-theme]") ?? [])]
+    [...(frame.contentDocument?.querySelectorAll("style[data-css-theme]") ?? [])]
         .map((style) => style.textContent)
         .join("\n");
 
 const framePalette = (frame: HTMLIFrameElement): string | null =>
-    frame.contentDocument?.querySelector("style[data-eledrone-palette]")?.textContent ?? null;
+    frame.contentDocument?.querySelector("style[data-css-palette]")?.textContent ?? null;
 
 /** A widget, as far as this store is concerned: an iframe it can reach into. */
 async function addFrame(): Promise<HTMLIFrameElement> {
@@ -91,19 +91,19 @@ async function start(): Promise<void> {
     await store.start();
 }
 
-describe("EledroneThemeStore", () => {
+describe("ThemeStore", () => {
     beforeEach(async () => {
         source = new FakeSource();
         window.localStorage.clear();
-        await SettingsStore.setValue("eledroneCssThemes", null, SettingLevel.DEVICE, []);
-        await SettingsStore.setValue("eledroneAccentColour", null, SettingLevel.DEVICE, null);
-        await SettingsStore.setValue("eledroneSurfaceColour", null, SettingLevel.DEVICE, null);
+        await SettingsStore.setValue("cssThemes", null, SettingLevel.DEVICE, []);
+        await SettingsStore.setValue("accentColour", null, SettingLevel.DEVICE, null);
+        await SettingsStore.setValue("surfaceColour", null, SettingLevel.DEVICE, null);
     });
 
     afterEach(() => {
         store.stop();
         vi.restoreAllMocks();
-        for (const style of document.querySelectorAll("style[data-eledrone-css-theme], style[data-eledrone-palette]")) {
+        for (const style of document.querySelectorAll("style[data-css-theme], style[data-css-palette]")) {
             style.remove();
         }
         for (const frame of document.querySelectorAll("iframe")) frame.remove();
@@ -112,7 +112,7 @@ describe("EledroneThemeStore", () => {
     it("applies the stylesheets that are switched on, and no others", async () => {
         source.themes.set("pink.css", ":root { --thing: pink; }");
         source.themes.set("blue.css", ":root { --thing: blue; }");
-        await SettingsStore.setValue("eledroneCssThemes", null, SettingLevel.DEVICE, ["pink.css"]);
+        await SettingsStore.setValue("cssThemes", null, SettingLevel.DEVICE, ["pink.css"]);
 
         await start();
 
@@ -133,7 +133,7 @@ describe("EledroneThemeStore", () => {
     });
 
     it("colours the app from the switcher when no stylesheet is applied", async () => {
-        await SettingsStore.setValue("eledroneAccentColour", null, SettingLevel.DEVICE, "#ff4fa3");
+        await SettingsStore.setValue("accentColour", null, SettingLevel.DEVICE, "#ff4fa3");
         await start();
 
         expect(store.isCssThemeApplied).toBe(false);
@@ -144,7 +144,7 @@ describe("EledroneThemeStore", () => {
         // The two are not exclusive: the theme is unlayered and the palette is
         // not, so the cascade gives each token to whichever set it, and the
         // picked colours still reach everything the theme says nothing about.
-        await SettingsStore.setValue("eledroneAccentColour", null, SettingLevel.DEVICE, "#ff4fa3");
+        await SettingsStore.setValue("accentColour", null, SettingLevel.DEVICE, "#ff4fa3");
         source.themes.set("pink.css", ":root { --thing: pink; }");
         await start();
 
@@ -157,8 +157,8 @@ describe("EledroneThemeStore", () => {
 
     it("treats a stylesheet that has gone missing as no stylesheet at all", async () => {
         // The file was deleted from the folder, but the setting still names it
-        await SettingsStore.setValue("eledroneCssThemes", null, SettingLevel.DEVICE, ["gone.css"]);
-        await SettingsStore.setValue("eledroneAccentColour", null, SettingLevel.DEVICE, "#ff4fa3");
+        await SettingsStore.setValue("cssThemes", null, SettingLevel.DEVICE, ["gone.css"]);
+        await SettingsStore.setValue("accentColour", null, SettingLevel.DEVICE, "#ff4fa3");
 
         await start();
 
@@ -215,7 +215,7 @@ describe("EledroneThemeStore", () => {
         // a half-finished write can leave in any shape. A theme list is not
         // worth throwing the settings dialog over.
         vi.spyOn(SettingsStore, "getValue").mockImplementation((setting) =>
-            setting === "eledroneCssThemes" ? (true as never) : (null as never),
+            setting === "cssThemes" ? (true as never) : (null as never),
         );
 
         await start();
@@ -240,7 +240,7 @@ describe("EledroneThemeStore", () => {
         // that boundary on their own.
         const frame = await addFrame();
         source.themes.set("pink.css", ":root { --thing: pink; }");
-        await SettingsStore.setValue("eledroneCssThemes", null, SettingLevel.DEVICE, ["pink.css"]);
+        await SettingsStore.setValue("cssThemes", null, SettingLevel.DEVICE, ["pink.css"]);
 
         await start();
 
@@ -249,7 +249,7 @@ describe("EledroneThemeStore", () => {
 
     it("writes into a widget that turns up later", async () => {
         source.themes.set("pink.css", ":root { --thing: pink; }");
-        await SettingsStore.setValue("eledroneCssThemes", null, SettingLevel.DEVICE, ["pink.css"]);
+        await SettingsStore.setValue("cssThemes", null, SettingLevel.DEVICE, ["pink.css"]);
         await start();
 
         const frame = await addFrame();
@@ -259,7 +259,7 @@ describe("EledroneThemeStore", () => {
 
     it("writes into a widget again once it has reloaded", async () => {
         source.themes.set("pink.css", ":root { --thing: pink; }");
-        await SettingsStore.setValue("eledroneCssThemes", null, SettingLevel.DEVICE, ["pink.css"]);
+        await SettingsStore.setValue("cssThemes", null, SettingLevel.DEVICE, ["pink.css"]);
         await start();
         const frame = await addFrame();
         await vi.waitFor(() => expect(frameThemeCss(frame)).toContain("--thing: pink"));
@@ -272,7 +272,7 @@ describe("EledroneThemeStore", () => {
     });
 
     it("gives a widget the switcher's colours when no stylesheet is applied", async () => {
-        await SettingsStore.setValue("eledroneAccentColour", null, SettingLevel.DEVICE, "#ff4fa3");
+        await SettingsStore.setValue("accentColour", null, SettingLevel.DEVICE, "#ff4fa3");
         const frame = await addFrame();
 
         await start();
@@ -291,16 +291,17 @@ describe("EledroneThemeStore", () => {
         });
         document.body.appendChild(frame);
         source.themes.set("pink.css", ":root { --thing: pink; }");
-        await SettingsStore.setValue("eledroneCssThemes", null, SettingLevel.DEVICE, ["pink.css"]);
+        await SettingsStore.setValue("cssThemes", null, SettingLevel.DEVICE, ["pink.css"]);
 
         await start();
 
         expect(appliedThemeCss()).toContain("--thing: pink");
     });
 
-    it("falls back to browser storage when the platform has no folder", async () => {
+    it("keeps themes in browser storage when the platform has no folder", async () => {
+        // What BasePlatform answers, and therefore what the web app gets
         vi.spyOn(PlatformPeg, "get").mockReturnValue({
-            getCssThemeSource: () => null,
+            getCssThemeSource: () => new StoredCssThemeSource(),
         } as unknown as BasePlatform);
         await store.start();
 
@@ -310,6 +311,6 @@ describe("EledroneThemeStore", () => {
         expect(store.themesDirectory).toBeNull();
         expect(appliedThemeNames()).toEqual(["pink.css"]);
         // Kept where a reload will find it again
-        expect(window.localStorage.getItem("mx_eledrone_css_themes")).toContain("pink.css");
+        expect(window.localStorage.getItem("mx_css_themes")).toContain("pink.css");
     });
 });

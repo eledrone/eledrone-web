@@ -21,7 +21,7 @@ import SettingsStore from "../settings/SettingsStore";
 import PlatformPeg from "../PlatformPeg";
 import SdkConfig from "../SdkConfig";
 import { setTheme } from "../theme";
-import { EledroneThemeStore } from "../theming/EledroneThemeStore";
+import { ThemeStore } from "../theming/ThemeStore";
 import { ModuleRunner } from "../modules/ModuleRunner";
 import type MatrixChat from "../components/structures/MatrixChat";
 import ElectronPlatform from "./platform/ElectronPlatform";
@@ -91,7 +91,7 @@ export async function loadTheme(): Promise<void> {
     // is painted in the user's colours the first time, not repainted into them
     // a moment later; a themes folder that cannot be read only logs, so this
     // never keeps the app from starting.
-    await EledroneThemeStore.instance.start();
+    await ThemeStore.instance.start();
 }
 
 export async function loadApp(urlParams: URLParams): Promise<void> {

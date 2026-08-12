@@ -14,21 +14,21 @@ import PlatformPeg from "../PlatformPeg";
 import { type CssThemeFile, type CssThemeSource, StoredCssThemeSource } from "./CssThemeSource";
 import { generatePaletteCss } from "./palette";
 
-export enum EledroneThemeEvent {
+export enum ThemeEvent {
     /** The themes, or which of them are on, have changed. */
     Update = "update",
 }
 
 type EventHandlerMap = {
-    [EledroneThemeEvent.Update]: () => void;
+    [ThemeEvent.Update]: () => void;
 };
 
 /** Everything the applied result depends on: a change to any of these re-applies it. */
-const WATCHED_SETTINGS = ["eledroneCssThemes", "eledroneAccentColour", "eledroneSurfaceColour"] as const;
+const WATCHED_SETTINGS = ["cssThemes", "accentColour", "surfaceColour"] as const;
 
 /** Marks the style elements this store owns, so it can take them away again. */
-const CSS_THEME_ATTRIBUTE = "data-eledrone-css-theme";
-const PALETTE_ATTRIBUTE = "data-eledrone-palette";
+const CSS_THEME_ATTRIBUTE = "data-css-theme";
+const PALETTE_ATTRIBUTE = "data-css-palette";
 
 /**
  * The fork's own layer of theming, on top of Element's light and dark.
@@ -62,8 +62,8 @@ const PALETTE_ATTRIBUTE = "data-eledrone-palette";
  * Only token overrides carry across: `.mx_*` selectors are this app's markup
  * and match nothing inside a widget.
  */
-export class EledroneThemeStore extends TypedEventEmitter<EledroneThemeEvent, EventHandlerMap> {
-    public static readonly instance = new EledroneThemeStore();
+export class ThemeStore extends TypedEventEmitter<ThemeEvent, EventHandlerMap> {
+    public static readonly instance = new ThemeStore();
 
     private source?: CssThemeSource;
     private unwatchSource?: () => void;
@@ -98,12 +98,12 @@ export class EledroneThemeStore extends TypedEventEmitter<EledroneThemeEvent, Ev
      * any shape, and a theme list is not worth throwing over.
      */
     public get enabledThemeNames(): string[] {
-        const stored: unknown = SettingsStore.getValue("eledroneCssThemes");
+        const stored: unknown = SettingsStore.getValue("cssThemes");
         return Array.isArray(stored) ? stored.filter((name) => typeof name === "string") : [];
     }
 
     /** One of the two switcher colours, or null if it is unset or unusable. */
-    private colourSetting(setting: "eledroneAccentColour" | "eledroneSurfaceColour"): string | null {
+    private colourSetting(setting: "accentColour" | "surfaceColour"): string | null {
         const stored: unknown = SettingsStore.getValue(setting);
         return typeof stored === "string" ? stored : null;
     }
@@ -120,6 +120,9 @@ export class EledroneThemeStore extends TypedEventEmitter<EledroneThemeEvent, Ev
     public async start(): Promise<void> {
         if (this.source) return;
 
+        // Every platform has a source - the base class answers with browser
+        // storage - so the fallback here is only for there being no platform at
+        // all, which is early startup and tests rather than a real state.
         this.source = PlatformPeg.get()?.getCssThemeSource() ?? new StoredCssThemeSource();
         this.unwatchSource = this.source.watch(() => void this.refresh());
         this.settingWatchers = WATCHED_SETTINGS.map((setting) =>
@@ -158,7 +161,7 @@ export class EledroneThemeStore extends TypedEventEmitter<EledroneThemeEvent, Ev
         }
 
         this.apply();
-        this.emit(EledroneThemeEvent.Update);
+        this.emit(ThemeEvent.Update);
     }
 
     /** Whether the named theme is switched on. */
@@ -170,7 +173,7 @@ export class EledroneThemeStore extends TypedEventEmitter<EledroneThemeEvent, Ev
     public async setEnabled(fileName: string, enabled: boolean): Promise<void> {
         const current = this.enabledThemeNames.filter((name) => name !== fileName);
         const next = enabled ? [...current, fileName] : current;
-        await SettingsStore.setValue("eledroneCssThemes", null, SettingLevel.DEVICE, next);
+        await SettingsStore.setValue("cssThemes", null, SettingLevel.DEVICE, next);
         // The watcher fires too, but only once the write has landed; applying
         // here as well is what makes the toggle feel immediate.
         this.apply();
@@ -190,7 +193,7 @@ export class EledroneThemeStore extends TypedEventEmitter<EledroneThemeEvent, Ev
             const fileName = normaliseFileName(file.name);
             await this.source.write(fileName, await file.text());
             if (!this.isEnabled(fileName)) {
-                await SettingsStore.setValue("eledroneCssThemes", null, SettingLevel.DEVICE, [
+                await SettingsStore.setValue("cssThemes", null, SettingLevel.DEVICE, [
                     ...this.enabledThemeNames,
                     fileName,
                 ]);
@@ -206,7 +209,7 @@ export class EledroneThemeStore extends TypedEventEmitter<EledroneThemeEvent, Ev
 
         await this.source.remove(fileName);
         await SettingsStore.setValue(
-            "eledroneCssThemes",
+            "cssThemes",
             null,
             SettingLevel.DEVICE,
             this.enabledThemeNames.filter((name) => name !== fileName),
@@ -243,8 +246,8 @@ export class EledroneThemeStore extends TypedEventEmitter<EledroneThemeEvent, Ev
             // of the two owns any given token, so the picked colours stay in
             // effect everywhere a theme has nothing to say.
             palette: generatePaletteCss(
-                this.colourSetting("eledroneAccentColour"),
-                this.colourSetting("eledroneSurfaceColour"),
+                this.colourSetting("accentColour"),
+                this.colourSetting("surfaceColour"),
             ),
         };
     }

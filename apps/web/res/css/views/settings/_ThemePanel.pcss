@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR GPL-3.0-only OR LicenseRef-Element-Com
 Please see LICENSE files in the repository root for full details.
 */
 
-.mx_EledroneThemePanel_actions {
+.mx_ThemePanel_actions {
     display: flex;
     flex-wrap: wrap;
     gap: var(--cpd-space-2x);
@@ -17,7 +17,7 @@ Please see LICENSE files in the repository root for full details.
  * a display:none input cannot be opened by clicking it from script in every
  * browser, and this one is opened exactly that way.
  */
-.mx_EledroneThemePanel_fileInput {
+.mx_ThemePanel_fileInput {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -26,44 +26,44 @@ Please see LICENSE files in the repository root for full details.
     white-space: nowrap;
 }
 
-.mx_EledroneThemePanel_themes {
+.mx_ThemePanel_themes {
     display: flex;
     flex-direction: column;
     gap: var(--cpd-space-1x);
 }
 
-.mx_EledroneThemePanel_theme {
+.mx_ThemePanel_theme {
     display: flex;
     align-items: center;
     gap: var(--cpd-space-2x);
 
     /* The name takes the width, so the delete button keeps its own */
-    .mx_EledroneThemePanel_themeField {
+    .mx_ThemePanel_themeField {
         flex: 1 1 auto;
         min-width: 0;
     }
 }
 
-.mx_EledroneThemePanel_empty,
-.mx_EledroneThemePanel_error {
+.mx_ThemePanel_empty,
+.mx_ThemePanel_error {
     font: var(--cpd-font-body-sm-regular);
 }
 
-.mx_EledroneThemePanel_empty {
+.mx_ThemePanel_empty {
     color: var(--cpd-color-text-secondary);
 }
 
-.mx_EledroneThemePanel_error {
+.mx_ThemePanel_error {
     color: var(--cpd-color-text-critical-primary);
 }
 
-.mx_EledroneThemePanel_colour {
+.mx_ThemePanel_colour {
     display: flex;
     align-items: center;
     gap: var(--cpd-space-3x);
 }
 
-.mx_EledroneThemePanel_colourLabel {
+.mx_ThemePanel_colourLabel {
     display: flex;
     align-items: center;
     gap: var(--cpd-space-2x);
@@ -77,7 +77,7 @@ Please see LICENSE files in the repository root for full details.
  * them small. Sized and framed here so it reads as a swatch in a settings row
  * rather than as a button with a colour in it.
  */
-.mx_EledroneThemePanel_swatch {
+.mx_ThemePanel_swatch {
     inline-size: 40px;
     block-size: 28px;
     padding: 2px;

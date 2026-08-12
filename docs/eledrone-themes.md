@@ -129,13 +129,13 @@ overrides an earlier one.
 
 ## Where the code is
 
-| File                                                            | Is                                                    |
-| --------------------------------------------------------------- | ----------------------------------------------------- |
-| `apps/desktop/src/themes.ts`                                    | the folder: listing, writing, watching                |
-| `apps/web/src/theming/CssThemeSource.ts`                        | the interface, and the browser storage implementation |
-| `apps/web/src/theming/EledroneThemeStore.ts`                    | what is applied, and the rule about which wins        |
-| `apps/web/src/theming/palette.ts`                               | the ramps and the colour maths                        |
-| `apps/web/src/components/views/settings/EledroneThemePanel.tsx` | the settings UI                                       |
+| File                                                    | Is                                                    |
+| ------------------------------------------------------- | ----------------------------------------------------- |
+| `apps/desktop/src/themes.ts`                            | the folder: listing, writing, watching                |
+| `apps/web/src/theming/CssThemeSource.ts`                | the interface, and the browser storage implementation |
+| `apps/web/src/theming/ThemeStore.ts`                    | what is applied, and the rule about which wins        |
+| `apps/web/src/theming/palette.ts`                       | the ramps and the colour maths                        |
+| `apps/web/src/components/views/settings/ThemePanel.tsx` | the settings UI                                       |
 
 The store is started from `loadTheme()` in `apps/web/src/vector/init.tsx`, straight after Element's
 own theme is applied, so the window is painted in the user's colours the first time rather than

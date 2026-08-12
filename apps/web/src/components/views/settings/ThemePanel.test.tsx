@@ -12,15 +12,15 @@ import { fireEvent, render, screen, waitFor } from "test-utils-rtl";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { EledroneThemePanel } from "./EledroneThemePanel";
-import { EledroneThemeStore } from "../../../theming/EledroneThemeStore";
+import { ThemePanel } from "./ThemePanel";
+import { ThemeStore } from "../../../theming/ThemeStore";
 import { type CssThemeListing, type CssThemeSource } from "../../../theming/CssThemeSource";
 import SettingsStore from "../../../settings/SettingsStore";
 import { SettingLevel } from "../../../settings/SettingLevel";
 import PlatformPeg from "../../../PlatformPeg";
 import type BasePlatform from "../../../BasePlatform";
 
-const store = EledroneThemeStore.instance;
+const store = ThemeStore.instance;
 
 /** A themes folder, as the desktop platform would provide one. */
 const fakeSource = (themes: Record<string, string>): CssThemeSource & { revealed: () => number } => {
@@ -46,17 +46,17 @@ async function startWith(source: CssThemeSource): Promise<void> {
     await store.start();
 }
 
-describe("<EledroneThemePanel />", () => {
+describe("<ThemePanel />", () => {
     beforeEach(async () => {
-        await SettingsStore.setValue("eledroneCssThemes", null, SettingLevel.DEVICE, []);
-        await SettingsStore.setValue("eledroneAccentColour", null, SettingLevel.DEVICE, null);
-        await SettingsStore.setValue("eledroneSurfaceColour", null, SettingLevel.DEVICE, null);
+        await SettingsStore.setValue("cssThemes", null, SettingLevel.DEVICE, []);
+        await SettingsStore.setValue("accentColour", null, SettingLevel.DEVICE, null);
+        await SettingsStore.setValue("surfaceColour", null, SettingLevel.DEVICE, null);
     });
 
     afterEach(() => {
         store.stop();
         vi.restoreAllMocks();
-        for (const style of document.querySelectorAll("style[data-eledrone-css-theme], style[data-eledrone-palette]")) {
+        for (const style of document.querySelectorAll("style[data-css-theme], style[data-css-palette]")) {
             style.remove();
         }
     });
@@ -64,7 +64,7 @@ describe("<EledroneThemePanel />", () => {
     it("says where the stylesheets live, and offers to show them", async () => {
         const source = fakeSource({ "pink.css": "a {}" });
         await startWith(source);
-        render(<EledroneThemePanel />);
+        render(<ThemePanel />);
 
         expect(screen.getByText(/\/home\/someone\/\.config\/eledrone\/themes/)).toBeInTheDocument();
 
@@ -74,17 +74,17 @@ describe("<EledroneThemePanel />", () => {
 
     it("lists the stylesheets and applies the one that is switched on", async () => {
         await startWith(fakeSource({ "pink.css": ":root { --thing: pink; }" }));
-        render(<EledroneThemePanel />);
+        render(<ThemePanel />);
 
         await userEvent.click(screen.getByRole("switch", { name: "pink.css" }));
 
         await waitFor(() => expect(store.enabledThemeNames).toEqual(["pink.css"]));
-        expect(document.querySelector("style[data-eledrone-css-theme='pink.css']")).toBeInTheDocument();
+        expect(document.querySelector("style[data-css-theme='pink.css']")).toBeInTheDocument();
     });
 
     it("deletes a stylesheet", async () => {
         await startWith(fakeSource({ "pink.css": "a {}" }));
-        render(<EledroneThemePanel />);
+        render(<ThemePanel />);
 
         await userEvent.click(screen.getByRole("button", { name: "Delete" }));
 
@@ -93,42 +93,42 @@ describe("<EledroneThemePanel />", () => {
 
     it("says so when there is nothing to list", async () => {
         await startWith(fakeSource({}));
-        render(<EledroneThemePanel />);
+        render(<ThemePanel />);
 
         expect(screen.getByText("No stylesheets yet.")).toBeInTheDocument();
     });
 
     it("changes the accent colour", async () => {
         await startWith(fakeSource({}));
-        const { container } = render(<EledroneThemePanel />);
+        const { container } = render(<ThemePanel />);
 
-        const swatch = container.querySelector<HTMLInputElement>(".mx_EledroneThemePanel_swatch")!;
+        const swatch = container.querySelector<HTMLInputElement>(".mx_ThemePanel_swatch")!;
         // A colour input cannot be typed into, so this is what the picker does
         fireEvent.change(swatch, { target: { value: "#ff4fa3" } });
 
-        await waitFor(() => expect(SettingsStore.getValue("eledroneAccentColour")).toBe("#ff4fa3"));
-        expect(document.querySelector("style[data-eledrone-palette]")?.textContent).toContain("--cpd-color-green-900:");
+        await waitFor(() => expect(SettingsStore.getValue("accentColour")).toBe("#ff4fa3"));
+        expect(document.querySelector("style[data-css-palette]")?.textContent).toContain("--cpd-color-green-900:");
     });
 
     it("leaves the colours pickable while a stylesheet is applied", async () => {
         // A theme overrides the colours it sets and no others, so taking the
         // pickers away would strand every token the theme does not mention.
-        await SettingsStore.setValue("eledroneCssThemes", null, SettingLevel.DEVICE, ["pink.css"]);
+        await SettingsStore.setValue("cssThemes", null, SettingLevel.DEVICE, ["pink.css"]);
         await startWith(fakeSource({ "pink.css": ":root { --thing: pink; }" }));
-        const { container } = render(<EledroneThemePanel />);
+        const { container } = render(<ThemePanel />);
 
-        for (const swatch of document.querySelectorAll<HTMLInputElement>(".mx_EledroneThemePanel_swatch")) {
+        for (const swatch of document.querySelectorAll<HTMLInputElement>(".mx_ThemePanel_swatch")) {
             expect(swatch).toBeEnabled();
         }
 
-        const swatch = container.querySelector<HTMLInputElement>(".mx_EledroneThemePanel_swatch")!;
+        const swatch = container.querySelector<HTMLInputElement>(".mx_ThemePanel_swatch")!;
         fireEvent.change(swatch, { target: { value: "#ff4fa3" } });
 
         await waitFor(() =>
-            expect(document.querySelector("style[data-eledrone-palette]")?.textContent).toContain(
+            expect(document.querySelector("style[data-css-palette]")?.textContent).toContain(
                 "--cpd-color-green-900:",
             ),
         );
-        expect(document.querySelector("style[data-eledrone-css-theme]")?.textContent).toContain("--thing: pink");
+        expect(document.querySelector("style[data-css-theme]")?.textContent).toContain("--thing: pink");
     });
 });
