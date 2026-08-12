@@ -67,6 +67,40 @@ Element Call embedded-eledrone-f12defc
 `embedded-v0.22.0` instead means the app is still on upstream's package. Telling
 those apart has already cost an afternoon once.
 
+## Version skew, and what it broke
+
+The released package was Element Call 0.22. This fork's branch tracks upstream's
+development trunk, so adopting our own build jumped the widget forward by months
+while element-web stayed put. Two things broke immediately, and both are worth
+recognising because the shape will recur on future bumps.
+
+**Finding the SFU.** Discovery used to try the MSC4143 transports endpoint, then
+`.well-known`, then the widget's own config. Only the middle step ever worked
+here: Dendrite answers 404 for the endpoint, and the SFU is advertised in
+`.well-known`. Upstream removed that step (element-hq/element-call#4153), leaving
+nowhere to look. The fork now puts `livekit_service_url` in the widget's
+`config.json` (`vite-embedded.config.ts`) and reads it _first_, rather than last.
+Reading it last was not enough: embedded, the endpoint query is an MSC4515 widget
+action, and the "unknown action" reply carries no `httpStatus`, so
+`calculateRetryBackoff` cannot tell it from a blip and retried it four times over
+~30s while the widget stopped answering us.
+
+**MSC4515 itself.** That query is the widget asking _us_ where the SFU is. The
+`matrix-widget-api` we ship predates the MSC, so it neither serves the request
+nor recognises the capability, and every call opened a permission prompt showing
+the raw MSC string — approving it never stuck, because approvals are keyed by
+widget ID and `Call.ts` gives each call a fresh random one.
+`ElementWidgetDriver` now auto-approves it alongside the other capabilities it
+already trusts our widget with. That only silences the prompt; we still cannot
+answer the request, which is fine only because discovery no longer asks.
+Implementing it properly is the real fix, and would give the capability a
+readable name.
+
+The general lesson: the widget is newer than its host, and mismatches surface as
+a question the host has never heard of. Pinning the fork to upstream's release
+tags rather than trunk would trade this class of problem for a slower flow of
+upstream fixes.
+
 ## The cost
 
 Syncing upstream now means resolving conflicts in two repositories rather than

@@ -129,6 +129,23 @@ export class ElementWidgetDriver extends WidgetDriver {
             this.allowedCapabilities.add(MatrixCapabilities.MSC4407SendStickyEvent);
             this.allowedCapabilities.add(MatrixCapabilities.MSC4407ReceiveStickyEvent);
             this.allowedCapabilities.add(MatrixCapabilities.MSC4039DownloadFile);
+            // MSC4515: the widget asks us where the SFU is rather than looking
+            // it up itself. Spelled out rather than taken from MatrixCapabilities
+            // because the matrix-widget-api we ship predates the MSC.
+            //
+            // Auto-approved for the same reason as everything above it: this is
+            // a widget we build and serve ourselves. Without it every call
+            // opened a permission prompt, and one that could not even name what
+            // it was asking for - an unknown capability has no translation, so
+            // the dialog showed the raw MSC string. Remembering the answer does
+            // not help: approvals are keyed by widget ID, and Call.ts gives each
+            // call a fresh random one.
+            //
+            // Note this only silences the prompt. We still cannot answer the
+            // request; our fork of Element Call reads the URL from its own
+            // config and no longer asks. Implementing it properly is the real
+            // fix, and would also give the capability a readable name.
+            this.allowedCapabilities.add("org.matrix.msc4515.rtc_transports");
 
             this.allowedCapabilities.add(
                 WidgetEventCapability.forStateEvent(EventDirection.Receive, EventType.RoomName).raw,
