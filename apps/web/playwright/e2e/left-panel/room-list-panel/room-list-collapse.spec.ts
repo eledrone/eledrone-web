@@ -59,37 +59,24 @@ test.describe("Collapsible Room list", () => {
     });
 
     test(
-        "should be possible to fully collapse and expand the left panel",
+        "should stop at its minimum width rather than collapsing",
         { tag: "@screenshot" },
         async ({ page, app, user }) => {
             const leftPanelLocator = page.getByTestId("left-panel");
 
-            // Collapse the panel
+            // Drag far past where the panel used to snap shut. The call panel
+            // runs along the foot of this column and has to stay readable, so
+            // the panel holds its minimum instead of collapsing to nothing.
             await resize(page, -300);
-            let currentBoundingBox = await leftPanelLocator.boundingBox();
-            expect(currentBoundingBox!.width).toStrictEqual(0);
+            const currentBoundingBox = await leftPanelLocator.boundingBox();
+            expect(currentBoundingBox!.width).toBeGreaterThanOrEqual(200);
 
-            // Expect te separator to be shown
-            const separator = page.getByRole("separator", { name: "Click or drag to expand" });
-            await expect(separator).toBeInViewport();
-            await expect(page).toMatchScreenshot("room-list-collapse-fully-collapsed.png");
+            // Every control is still there, and still says what it does
+            await expect(page.getByRole("button", { name: "Mute microphone" })).toBeVisible();
+            await expect(page.getByRole("button", { name: "Quick settings" })).toBeVisible();
+            await expect(page.getByRole("button", { name: "User menu" })).toBeVisible();
 
-            // Should be possible to expand by clicking on the separator
-            await separator.click();
-            currentBoundingBox = await leftPanelLocator.boundingBox();
-            expect(currentBoundingBox!.width).toBeGreaterThan(365);
-
-            // Collapse the panel again
-            await resize(page, -300);
-
-            // Check that the panel can be expanded by dragging the separator
-            const separatorBoundingBox = await separator.boundingBox();
-            const mouseX = separatorBoundingBox!.x + separatorBoundingBox!.width / 2;
-            const mouseY = separatorBoundingBox!.y + separatorBoundingBox!.height / 2;
-            await page.mouse.move(mouseX, mouseY);
-            await page.mouse.down();
-            await page.mouse.move(mouseX + 400, mouseY);
-            expect(currentBoundingBox!.width).toBeGreaterThan(365);
+            await expect(page).toMatchScreenshot("room-list-collapse-minimum-width.png");
         },
     );
 });

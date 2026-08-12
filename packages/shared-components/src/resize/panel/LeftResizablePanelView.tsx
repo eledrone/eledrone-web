@@ -60,7 +60,8 @@ export function LeftResizablePanelView({
             inert={isCollapsed}
             id={LEFT_PANEL_ID}
             className={className}
-            collapsible
+            // Not collapsible: dragging past the minimum used to snap the panel
+            // shut, and the call panel along its foot has to stay visible.
             minSize={props.minSize}
             maxSize={props.maxSize}
             defaultSize={defaultSize}

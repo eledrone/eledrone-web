@@ -18,6 +18,11 @@ Please see LICENSE files in the repository root for full details.
     border-right: 1px solid var(--cpd-color-bg-subtle-primary);
     flex: 0 0 auto;
     padding: 0;
+    /* The call panel dock lies over this corner, so keep out from under it, plus
+       a gap so whatever ends the rail is not flush against the panel.
+       There is no global border-box in this codebase, hence the local one. */
+    box-sizing: border-box;
+    padding-block-end: calc(var(--eledrone-call-dock-height, 0px) + var(--cpd-space-3x));
     margin: 0;
     position: relative;
     /* Fix for the blurred avatar-background */
@@ -292,7 +297,9 @@ Please see LICENSE files in the repository root for full details.
     /* root space buttons are bigger and not indented */
     & > .mx_AutoHideScrollbar {
         flex: 1;
-        padding: 0 0 16px 0;
+        /* The user menu used to sit above this and give the spaces their offset
+           from the top; it lives in the call panel now, so pad for it here. */
+        padding: 12px 0 16px 0;
         scrollbar-gutter: stable;
 
         &.mx_IndicatorScrollbar_topOverflow {

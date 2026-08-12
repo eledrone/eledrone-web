@@ -21,10 +21,13 @@ import QuickThemeSwitcher from "./QuickThemeSwitcher";
 import Modal from "../../../Modal";
 import DevtoolsDialog from "../dialogs/DevtoolsDialog";
 import { SDKContext } from "../../../contexts/SDKContext.ts";
+import { UserTab } from "../dialogs/UserTab";
 
 const QuickSettingsButton: React.FC<{
     isPanelCollapsed: boolean;
-}> = ({ isPanelCollapsed = false }) => {
+    /** Where the tooltip goes when the button is a bare icon. */
+    tooltipPlacement?: "right" | "top";
+}> = ({ isPanelCollapsed = false, tooltipPlacement = "right" }) => {
     const sdkContext = useContext(SDKContext);
     const [menuDisplayed, handle, openMenu, closeMenu] = useContextMenu<HTMLButtonElement>();
 
@@ -55,6 +58,21 @@ const QuickSettingsButton: React.FC<{
                     kind="primary_outline"
                 >
                     {_t("quick_settings|all_settings")}
+                </AccessibleButton>
+
+                {/* This menu now hangs off the call panel, where the mic and
+                    camera are, so the settings for those are worth one click. */}
+                <AccessibleButton
+                    onClick={() => {
+                        closeMenu();
+                        defaultDispatcher.dispatch({
+                            action: Action.ViewUserSettings,
+                            initialTabId: UserTab.Voice,
+                        });
+                    }}
+                    kind="primary_outline"
+                >
+                    {_t("settings|voip|title")}
                 </AccessibleButton>
 
                 {currentRoomId && developerModeEnabled && (
@@ -102,7 +120,7 @@ const QuickSettingsButton: React.FC<{
 
     if (isPanelCollapsed) {
         button = (
-            <Tooltip label={_t("quick_settings|title")} placement="right">
+            <Tooltip label={_t("quick_settings|title")} placement={tooltipPlacement}>
                 {button}
             </Tooltip>
         );

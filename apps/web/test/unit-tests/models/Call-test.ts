@@ -45,6 +45,7 @@ import { WidgetMessagingStore } from "../../../src/stores/widgets/WidgetMessagin
 import ActiveWidgetStore, { ActiveWidgetStoreEvent } from "../../../src/stores/ActiveWidgetStore";
 import { ElementWidgetActions } from "../../../src/stores/widgets/ElementWidgetActions";
 import SettingsStore from "../../../src/settings/SettingsStore";
+import { SettingLevel } from "../../../src/settings/SettingLevel";
 import { Anonymity, PosthogAnalytics } from "../../../src/PosthogAnalytics";
 import { type SettingKey } from "../../../src/settings/Settings.tsx";
 import SdkConfig from "../../../src/SdkConfig.ts";
@@ -204,10 +205,13 @@ describe("JitsiCall", () => {
             expect(call.connectionState).toBe(ConnectionState.Connected);
         });
 
-        it("fails to disconnect if the widget returns an error", async () => {
+        it("disconnects anyway if the widget returns an error", async () => {
             await connect(call, widgetApi);
             mocked(widgetApi.transport).send.mockRejectedValue(new Error("never!"));
-            await expect(call.disconnect()).rejects.toBeDefined();
+
+            // Telling the widget is best effort; ending the call is not
+            await expect(call.disconnect()).resolves.toBeUndefined();
+            expect(call.connectionState).toBe(ConnectionState.Disconnected);
         });
 
         it("handles remote disconnection", async () => {
@@ -841,8 +845,280 @@ describe("ElementCall", () => {
 
         afterEach(() => cleanUpCallAndWidget(call, widget));
 
-        // TODO refactor initial device configuration to use the EW settings.
-        // Add tests for passing EW device configuration to the widget.
+        describe("initial device state", () => {
+            let originalGetValue: typeof SettingsStore.getValue;
+            let overrides: Partial<Record<SettingKey, boolean>>;
+
+            const emitDeviceMuteReport = (data: { audio_enabled: boolean; video_enabled: boolean }): void => {
+                widgetApi.emit(`action:${ElementWidgetActions.DeviceMute}`, {
+                    preventDefault: jest.fn(),
+                    detail: { data },
+                });
+            };
+
+            beforeEach(() => {
+                overrides = {};
+                originalGetValue = SettingsStore.getValue;
+                SettingsStore.getValue = ((name: SettingKey, ...rest: any[]): any =>
+                    name in overrides
+                        ? overrides[name]
+                        : (originalGetValue as any)(name, ...rest)) as typeof SettingsStore.getValue;
+            });
+
+            afterEach(() => {
+                SettingsStore.getValue = originalGetValue;
+            });
+
+            it("joins with the mic the left panel has switched on, and the camera off", async () => {
+                await call.start({});
+
+                expect(widgetApi.transport.send).toHaveBeenCalledWith(ElementWidgetActions.DeviceMute, {
+                    audio_enabled: true,
+                    video_enabled: false,
+                });
+            });
+
+            it("joins muted when the left panel's mic toggle is off", async () => {
+                overrides["audioInputMuted"] = true;
+
+                await call.start({});
+
+                expect(widgetApi.transport.send).toHaveBeenCalledWith(ElementWidgetActions.DeviceMute, {
+                    audio_enabled: false,
+                    video_enabled: false,
+                });
+            });
+
+            it("never joins with the camera on, whatever the stored default says", async () => {
+                overrides["videoInputMuted"] = false;
+
+                await call.start({});
+
+                expect(widgetApi.transport.send).toHaveBeenCalledWith(
+                    ElementWidgetActions.DeviceMute,
+                    expect.objectContaining({ video_enabled: false }),
+                );
+            });
+
+            it("asks again when the widget reports it came up in another state", async () => {
+                overrides["audioInputMuted"] = true;
+                await call.start({});
+                mocked(widgetApi.transport).send.mockClear();
+
+                // Element Call ignores the request until it has enumerated its
+                // devices, and only then says what it settled on
+                emitDeviceMuteReport({ audio_enabled: true, video_enabled: false });
+
+                expect(widgetApi.transport.send).toHaveBeenCalledWith(ElementWidgetActions.DeviceMute, {
+                    audio_enabled: false,
+                    video_enabled: false,
+                });
+            });
+
+            it("stops asking once the widget confirms the state", async () => {
+                overrides["audioInputMuted"] = true;
+                mocked(widgetApi.transport).send.mockResolvedValue({ audio_enabled: false, video_enabled: false });
+                // Connected, not merely started: the point of this test is what
+                // happens *within* a call, and out of one a change in the lobby
+                // is now adopted as the join default instead.
+                await connect(call, widgetApi);
+                await jest.advanceTimersByTimeAsync(0);
+                mocked(widgetApi.transport).send.mockClear();
+
+                // The user unmuting from within the call is theirs to decide, and
+                // must not be undone by the left panel's toggle
+                emitDeviceMuteReport({ audio_enabled: true, video_enabled: false });
+
+                expect(widgetApi.transport.send).not.toHaveBeenCalled();
+            });
+
+            it("pushes a default that changes while the user waits in the lobby", async () => {
+                await call.start({});
+                await jest.advanceTimersByTimeAsync(0);
+                mocked(widgetApi.transport).send.mockClear();
+
+                // The panel's mic toggle gets flipped while the lobby is up. It
+                // used to be read only when the widget started, so the change
+                // did nothing until the room was left and reopened.
+                overrides["audioInputMuted"] = true;
+                await SettingsStore.setValue("audioInputMuted", null, SettingLevel.DEVICE, true);
+                await jest.advanceTimersByTimeAsync(0);
+
+                expect(widgetApi.transport.send).toHaveBeenCalledWith(ElementWidgetActions.DeviceMute, {
+                    audio_enabled: false,
+                    video_enabled: false,
+                });
+            });
+
+            it("picks up a default change before it has ever been started", async () => {
+                // Opening the room directly leaves RoomViewStore to fire start()
+                // off unawaited, so the toggles cannot depend on it having landed
+                // - this used to do nothing until the room was reselected.
+                overrides["audioInputMuted"] = true;
+                await SettingsStore.setValue("audioInputMuted", null, SettingLevel.DEVICE, true);
+                await jest.advanceTimersByTimeAsync(0);
+
+                await call.start({});
+
+                expect(widgetApi.transport.send).toHaveBeenCalledWith(ElementWidgetActions.DeviceMute, {
+                    audio_enabled: false,
+                    video_enabled: false,
+                });
+            });
+
+            /*
+             * `getValue` is stubbed from `overrides` here, so reading a value
+             * back after a write would just report the old one. These assert the
+             * write itself instead.
+             */
+            const micDefaultWrites = (setValue: jest.SpyInstance): unknown[] =>
+                setValue.mock.calls.filter(([name]) => name === "audioInputMuted");
+
+            it("takes the mic back off the lobby, so the panel agrees with it", async () => {
+                overrides["audioInputMuted"] = false; // Joining unmuted
+                const setValue = jest.spyOn(SettingsStore, "setValue");
+                // Let the widget confirm, so nothing is pending any more
+                mocked(widgetApi.transport).send.mockResolvedValue({ audio_enabled: true, video_enabled: false });
+                await call.start({});
+                await jest.advanceTimersByTimeAsync(10);
+                setValue.mockClear();
+
+                // The user mutes in Element Call's own lobby. The panel shows the
+                // join default out of a call, so without this it would carry on
+                // claiming the mic was on.
+                emitDeviceMuteReport({ audio_enabled: false, video_enabled: false });
+                await jest.advanceTimersByTimeAsync(10);
+
+                expect(setValue).toHaveBeenCalledWith("audioInputMuted", null, SettingLevel.DEVICE, true);
+            });
+
+            it("does not tell the widget something it just told us", async () => {
+                overrides["audioInputMuted"] = false;
+                await call.start({});
+                await jest.advanceTimersByTimeAsync(10);
+                emitDeviceMuteReport({ audio_enabled: true, video_enabled: false }); // The widget agrees
+                mocked(widgetApi.transport).send.mockClear();
+
+                // A default that matches what the widget already reports has
+                // nothing to push, or the two take turns forever.
+                await SettingsStore.setValue("audioInputMuted", null, SettingLevel.DEVICE, false);
+                await jest.advanceTimersByTimeAsync(10);
+
+                expect(widgetApi.transport.send).not.toHaveBeenCalled();
+            });
+
+            it("keeps Element Call's own starting state out of the stored default", async () => {
+                overrides["audioInputMuted"] = true; // The user joins muted
+                const setValue = jest.spyOn(SettingsStore, "setValue");
+
+                await call.start({});
+                setValue.mockClear();
+                // Element Call comes up unmuted and says so before it has taken
+                // any notice of us. Adopting that would silently undo the user's
+                // choice every time they opened a room.
+                emitDeviceMuteReport({ audio_enabled: true, video_enabled: false });
+                await jest.advanceTimersByTimeAsync(10);
+
+                expect(micDefaultWrites(setValue)).toEqual([]);
+            });
+
+            it("leaves the default alone once in the call", async () => {
+                overrides["audioInputMuted"] = false;
+                const setValue = jest.spyOn(SettingsStore, "setValue");
+                await connect(call, widgetApi);
+                await jest.advanceTimersByTimeAsync(10);
+                setValue.mockClear();
+
+                // Muting within a call is about that call, not about how the
+                // next one starts.
+                emitDeviceMuteReport({ audio_enabled: false, video_enabled: false });
+                await jest.advanceTimersByTimeAsync(10);
+
+                expect(micDefaultWrites(setValue)).toEqual([]);
+            });
+
+            it("leaves a running call alone when the default changes", async () => {
+                await connect(call, widgetApi);
+                await jest.advanceTimersByTimeAsync(0);
+                mocked(widgetApi.transport).send.mockClear();
+
+                overrides["audioInputMuted"] = true;
+                await SettingsStore.setValue("audioInputMuted", null, SettingLevel.DEVICE, true);
+                await jest.advanceTimersByTimeAsync(0);
+
+                // In a call the toggle is the call's own mute, driven straight
+                // from the panel - a default has nothing left to say about it.
+                expect(widgetApi.transport.send).not.toHaveBeenCalledWith(
+                    ElementWidgetActions.DeviceMute,
+                    expect.anything(),
+                );
+            });
+
+            it("drives its widget even though nothing ever started it", () => {
+                // On the room the app opens with, nothing gets as far as
+                // start(): the room is not in the client's store when
+                // RoomViewStore first looks, and by the time it is, that room is
+                // "the same room" and the question is not asked again. The widget
+                // still renders, and Element Call then talks to a host with
+                // nothing listening - its join and mute actions come back
+                // "unknown or unsupported from-widget action". Note this test
+                // never calls start(): the widget's messaging alone is the cue.
+                emitDeviceMuteReport({ audio_enabled: false, video_enabled: true });
+                expect(call.deviceMuteState).toEqual({ audio_enabled: false, video_enabled: true });
+
+                widgetApi.emit(`action:${ElementWidgetActions.JoinCall}`, new CustomEvent("widgetapirequest", {}));
+                expect(call.connectionState).toBe(ConnectionState.Connected);
+            });
+
+            it("follows the widget when it is rebuilt underneath us", async () => {
+                await call.start({});
+                await jest.advanceTimersByTimeAsync(0);
+
+                // React strict mode, a container move or a remount all replace
+                // the messaging. The handle start() took is dead from here on.
+                const { widgetApi: rebuilt } = setUpWidget(call);
+                await jest.advanceTimersByTimeAsync(0);
+                mocked(rebuilt.transport).send.mockClear();
+
+                // The call's own mic button has to keep reaching the panel...
+                rebuilt.emit(
+                    `action:${ElementWidgetActions.DeviceMute}`,
+                    new CustomEvent("widgetapirequest", {
+                        detail: { data: { audio_enabled: false, video_enabled: true } },
+                    }),
+                );
+                expect(call.deviceMuteState).toEqual({ audio_enabled: false, video_enabled: true });
+
+                // ...and joining from the new widget has to still reach us
+                rebuilt.emit(`action:${ElementWidgetActions.JoinCall}`, new CustomEvent("widgetapirequest", {}));
+                expect(call.connectionState).toBe(ConnectionState.Connected);
+            });
+
+            it("reports the state the widget settled on, so the panel can show it", async () => {
+                await call.start({});
+                await jest.advanceTimersByTimeAsync(0);
+
+                emitDeviceMuteReport({ audio_enabled: false, video_enabled: true });
+
+                expect(call.deviceMuteState).toEqual({ audio_enabled: false, video_enabled: true });
+            });
+
+            it("changes the devices of a call that is already running", async () => {
+                await call.start({});
+                await jest.advanceTimersByTimeAsync(0);
+                mocked(widgetApi.transport).send.mockClear();
+                mocked(widgetApi.transport).send.mockResolvedValue({ audio_enabled: true, video_enabled: true });
+
+                await call.setDeviceMute({ video_enabled: true });
+
+                // Only the field that was asked for: leaving the other out is how
+                // the widget is told to keep it as it is.
+                expect(widgetApi.transport.send).toHaveBeenCalledWith(ElementWidgetActions.DeviceMute, {
+                    video_enabled: true,
+                });
+                expect(call.deviceMuteState).toEqual({ audio_enabled: true, video_enabled: true });
+            });
+        });
 
         it("waits for messaging when starting (widget API available immediately)", async () => {
             // Temporarily remove the messaging to simulate connecting while the
@@ -903,10 +1179,53 @@ describe("ElementCall", () => {
             expect(firstMessaging.listenerCount(WidgetMessagingEvent.Start)).toBe(0); // No leaks
         });
 
-        it("fails to disconnect if the widget returns an error", async () => {
+        it("disconnects anyway if the widget returns an error", async () => {
             await connect(call, widgetApi);
             mocked(widgetApi.transport).send.mockRejectedValue(new Error("never!!1! >:("));
-            await expect(call.disconnect()).rejects.toBeDefined();
+
+            await expect(call.disconnect()).resolves.toBeUndefined();
+            expect(call.connectionState).toBe(ConnectionState.Disconnected);
+        });
+
+        it("disconnects even though Element Call never sends a hangup back", async () => {
+            await connect(call, widgetApi);
+            // Element Call acks the request and says nothing further - the
+            // behaviour the old code waited forever for.
+            mocked(widgetApi.transport).send.mockResolvedValue({});
+
+            await expect(call.disconnect()).resolves.toBeUndefined();
+            expect(call.connectionState).toBe(ConnectionState.Disconnected);
+        });
+
+        it("ends the call locally when the widget never answers at all", async () => {
+            await connect(call, widgetApi);
+            mocked(widgetApi.transport).send.mockReturnValue(new Promise(() => {})); // Never settles
+            // The unanswered request would otherwise be replayed into the next
+            // call in this widget, so the widget itself has to go
+            const destroyWidget = jest.spyOn(ActiveWidgetStore.instance, "destroyPersistentWidget");
+
+            const disconnection = call.disconnect();
+            await jest.advanceTimersByTimeAsync(5000);
+
+            await expect(disconnection).resolves.toBeUndefined();
+            expect(call.connectionState).toBe(ConnectionState.Disconnected);
+            expect(destroyWidget).toHaveBeenCalled();
+        });
+
+        it("leaves the widget alone when the hangup is acknowledged", async () => {
+            await connect(call, widgetApi);
+            mocked(widgetApi.transport).send.mockResolvedValue({});
+            const destroyWidget = jest.spyOn(ActiveWidgetStore.instance, "destroyPersistentWidget");
+
+            await call.disconnect();
+
+            expect(destroyWidget).not.toHaveBeenCalled();
+        });
+
+        it("does nothing when disconnecting a call that is already disconnected", async () => {
+            expect(call.connectionState).toBe(ConnectionState.Disconnected);
+            await expect(call.disconnect()).resolves.toBeUndefined();
+            expect(widgetApi.transport.send).not.toHaveBeenCalledWith(ElementWidgetActions.HangupCall, {});
         });
 
         it("handles remote disconnection", async () => {
@@ -1117,6 +1436,21 @@ describe("ElementCall", () => {
             await disconnect(call, widgetApi);
             expect(onDestroy).not.toHaveBeenCalled();
             call.off(CallEvent.Destroy, onDestroy);
+        });
+
+        it("can be rejoined from the lobby after hanging up locally", async () => {
+            await connect(call, widgetApi);
+            mocked(widgetApi.transport).send.mockResolvedValue({});
+
+            await call.disconnect();
+            expect(call.connectionState).toBe(ConnectionState.Disconnected);
+
+            // The widget is still there, showing its lobby, so the join it sends
+            // when the user goes back in has to still reach us. Closing our side
+            // on hangup took that listener away, and the call then ran with
+            // nothing in the UI knowing about it.
+            widgetApi.emit(`action:${ElementWidgetActions.JoinCall}`, new CustomEvent("widgetapirequest", {}));
+            await waitFor(() => expect(call.connectionState).toBe(ConnectionState.Connected), { interval: 5 });
         });
 
         it("handles remote disconnection and reconnect right after", async () => {

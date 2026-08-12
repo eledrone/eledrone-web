@@ -16,7 +16,6 @@ import { type PanelImperativeHandle } from "@element-hq/web-shared-components";
 import { ResizerViewModel } from "./ResizerViewModel";
 import SettingsStore from "../../settings/SettingsStore";
 import { SettingLevel } from "../../settings/SettingLevel";
-import { CallStore } from "../../stores/CallStore";
 
 /** The pointer handlers only read where the pointer is, so that is all a test has to give them. */
 const pointerAt = (x: number, y: number) => ({ clientX: x, clientY: y }) as PointerEvent;
@@ -28,18 +27,20 @@ describe("LeftPanelResizerViewModel", () => {
     });
 
     describe("Initial state is correct", () => {
-        it("should have correct initial state when panel was previously collapsed", () => {
+        it("should start expanded even if an older version left it collapsed", () => {
             SettingsStore.setValue("RoomList.isPanelCollapsed", null, SettingLevel.DEVICE, true);
-            const vm = new ResizerViewModel(CallStore.instance);
+            const vm = new ResizerViewModel();
+            // The call panel lives along the foot of the panel, so a stored
+            // collapsed state is ignored rather than restored.
             expect(vm.getSnapshot()).toStrictEqual({
-                isCollapsed: true,
-                initialSize: 0,
+                isCollapsed: false,
+                initialSize: undefined,
             });
         });
 
         it("should have correct initial state when panel was previously resized", () => {
             SettingsStore.setValue("RoomList.panelSize", null, SettingLevel.DEVICE, 34);
-            const vm = new ResizerViewModel(CallStore.instance);
+            const vm = new ResizerViewModel();
             expect(vm.getSnapshot()).toStrictEqual({
                 isCollapsed: false,
                 initialSize: 34,
@@ -47,7 +48,7 @@ describe("LeftPanelResizerViewModel", () => {
         });
 
         it("should have correct initial state when panel was neither resized nor collapsed", () => {
-            const vm = new ResizerViewModel(CallStore.instance);
+            const vm = new ResizerViewModel();
             expect(vm.getSnapshot()).toStrictEqual({
                 isCollapsed: false,
                 initialSize: undefined,
@@ -56,7 +57,7 @@ describe("LeftPanelResizerViewModel", () => {
     });
 
     it("should update isCollapsed on onLeftPanelResized()", async () => {
-        const vm = new ResizerViewModel(CallStore.instance);
+        const vm = new ResizerViewModel();
         vm.onLeftPanelResize({ inPixels: 100, asPercentage: 6 });
         await waitFor(() => {
             expect(vm.getSnapshot().isCollapsed).toStrictEqual(false);
@@ -68,7 +69,7 @@ describe("LeftPanelResizerViewModel", () => {
     });
 
     it("should noop on click when handle is not yet set", () => {
-        const vm = new ResizerViewModel(CallStore.instance);
+        const vm = new ResizerViewModel();
         expect(() => {
             // Click
             vm.onPointerDown(pointerAt(100, 100));
@@ -77,7 +78,7 @@ describe("LeftPanelResizerViewModel", () => {
     });
 
     it("should noop on mouse drag", () => {
-        const vm = new ResizerViewModel(CallStore.instance);
+        const vm = new ResizerViewModel();
         SettingsStore.setValue("RoomList.panelSize", null, SettingLevel.DEVICE, 34);
         const mockHandle = {
             resize: vi.fn(),
@@ -98,7 +99,7 @@ describe("LeftPanelResizerViewModel", () => {
     });
 
     it("should expand panel when a click wanders a little", () => {
-        const vm = new ResizerViewModel(CallStore.instance);
+        const vm = new ResizerViewModel();
         SettingsStore.setValue("RoomList.panelSize", null, SettingLevel.DEVICE, 34);
         const mockHandle = {
             resize: vi.fn(),
@@ -116,7 +117,7 @@ describe("LeftPanelResizerViewModel", () => {
     });
 
     it("should expand panel on a click that follows moving across the separator", () => {
-        const vm = new ResizerViewModel(CallStore.instance);
+        const vm = new ResizerViewModel();
         SettingsStore.setValue("RoomList.panelSize", null, SettingLevel.DEVICE, 34);
         const mockHandle = {
             resize: vi.fn(),
@@ -135,7 +136,7 @@ describe("LeftPanelResizerViewModel", () => {
 
     describe("should expand panel on double click when panel is collapsed", () => {
         it("to last non-zero width that the user set", () => {
-            const vm = new ResizerViewModel(CallStore.instance);
+            const vm = new ResizerViewModel();
             SettingsStore.setValue("RoomList.panelSize", null, SettingLevel.DEVICE, 34);
             const mockHandle = {
                 resize: vi.fn(),
@@ -150,7 +151,7 @@ describe("LeftPanelResizerViewModel", () => {
         });
 
         it("to maximum size of the panel", () => {
-            const vm = new ResizerViewModel(CallStore.instance);
+            const vm = new ResizerViewModel();
             const mockHandle = {
                 resize: vi.fn(),
                 isCollapsed: vi.fn().mockReturnValue(true),
@@ -164,8 +165,8 @@ describe("LeftPanelResizerViewModel", () => {
         });
     });
 
-    it("should collapse panel on click when panel is expanded", () => {
-        const vm = new ResizerViewModel(CallStore.instance);
+    it("should not collapse the panel on double click", () => {
+        const vm = new ResizerViewModel();
         const mockHandle = {
             collapse: vi.fn(),
             isCollapsed: vi.fn().mockReturnValue(false),
@@ -173,11 +174,13 @@ describe("LeftPanelResizerViewModel", () => {
         vm.setPanelHandle(mockHandle);
 
         vm.onDoubleClick();
-        expect(mockHandle.collapse).toHaveBeenCalled();
+
+        // Hiding the call panel by accident is not something to offer
+        expect(mockHandle.collapse).not.toHaveBeenCalled();
     });
 
     it("should ignore first resized event", () => {
-        const vm = new ResizerViewModel(CallStore.instance);
+        const vm = new ResizerViewModel();
         const mockHandle = {
             resize: vi.fn(),
             getSize: vi.fn().mockReturnValue(0),

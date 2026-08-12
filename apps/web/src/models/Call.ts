@@ -8,6 +8,7 @@ Please see LICENSE files in the repository root for full details.
 
 import {
     TypedEventEmitter,
+    EventType,
     RoomEvent,
     RoomStateEvent,
     type MatrixClient,
@@ -46,9 +47,64 @@ import SdkConfig from "../SdkConfig.ts";
 import DMRoomMap from "../utils/DMRoomMap.ts";
 import { type WidgetMessaging, WidgetMessagingEvent } from "../stores/widgets/WidgetMessaging.ts";
 import { BugReportEndpointURLLocal } from "../IConfigOptions.ts";
+import {
+    type DeviceMuteState,
+    getDefaultDeviceMuteState,
+    isCallDeviceEnabledByDefault,
+    setCallDeviceEnabledByDefault,
+} from "../utils/call-device-defaults.ts";
 
 const TIMEOUT_MS = 16000;
+
+/**
+ * How long to wait for the widget to acknowledge a hangup before giving up and
+ * ending the call locally anyway. Deliberately under the widget API transport's
+ * own 10s timeout, so the user is never left staring at a call they have left
+ * while a dead widget is waited on.
+ */
+const DISCONNECT_TIMEOUT_MS = 4000;
+
+/**
+ * Rejects if the given promise has not settled within `ms`.
+ *
+ * Not `utils/promise`'s `timeout`, which attaches a bare `.then` to the promise
+ * it is given: the promise that creates rejects along with it and has nothing
+ * listening, which takes the whole process down. Everything that reaches for a
+ * timeout here can fail, so it needs one that coped with that.
+ */
+const rejectAfter = async <T>(promise: Promise<T>, ms: number, message: string): Promise<T> => {
+    let timeoutId: number | undefined;
+    try {
+        return await Promise.race([
+            promise,
+            new Promise<never>((_resolve, reject) => {
+                timeoutId = window.setTimeout(() => reject(new Error(message)), ms);
+            }),
+        ]);
+    } finally {
+        clearTimeout(timeoutId);
+    }
+};
+
+/**
+ * How long our own RTC membership may be missing from a call we believe we are
+ * in before we conclude that we have left it. Long enough to ride out the gap a
+ * reconnection leaves, short enough that the panel does not linger.
+ */
+const OWN_MEMBERSHIP_GRACE_MS = 3000;
+
+/**
+ * How long a sticky membership event lives for. Mirrors the js-sdk's own
+ * MEMBERSHIP_STICKY_DURATION_MS, which it does not export; a retraction has to
+ * be sent with the same duration as the membership it replaces.
+ */
+const MEMBERSHIP_STICKY_DURATION_MS = 60 * 60 * 1000;
+
 const logger = rootLogger.getChild("models/Call");
+
+// Whether a widget's reported mic and camera state is the one we asked it for.
+const deviceMuteStateMatches = (reported: DeviceMuteState | undefined, desired: Required<DeviceMuteState>): boolean =>
+    reported?.audio_enabled === desired.audio_enabled && reported?.video_enabled === desired.video_enabled;
 
 // Waits until an event is emitted satisfying the given predicate
 const waitForEvent = async (
@@ -89,6 +145,9 @@ export enum CallEvent {
     Close = "close",
     Destroy = "destroy",
     CallTypeChanged = "call_type_changed",
+    // The mic and camera state the widget reports it is in. Only ElementCall
+    // emits this; it is what lets the left panel show and drive a running call.
+    DeviceMuteState = "device_mute_state",
 }
 
 interface CallEventHandlerMap {
@@ -100,6 +159,7 @@ interface CallEventHandlerMap {
     [CallEvent.Close]: () => void;
     [CallEvent.Destroy]: () => void;
     [CallEvent.CallTypeChanged]: (callType: CallType) => void;
+    [CallEvent.DeviceMuteState]: (state: Required<DeviceMuteState>) => void;
 }
 
 /**
@@ -132,7 +192,9 @@ export abstract class Call extends TypedEventEmitter<CallEvent, CallEventHandler
     protected get widgetApi(): ClientWidgetApi | null {
         return this._widgetApi;
     }
-    private set widgetApi(value: ClientWidgetApi | null) {
+    // Protected rather than private: a widget can be torn down and rebuilt under
+    // us, and whoever notices has to be able to point us at the new one.
+    protected set widgetApi(value: ClientWidgetApi | null) {
         this._widgetApi = value;
     }
 
@@ -305,21 +367,66 @@ export abstract class Call extends TypedEventEmitter<CallEvent, CallEventHandler
     }
 
     /**
+     * Called when a disconnection got no answer out of the widget, after the
+     * call has already been ended locally. A subclass whose widget can be left
+     * in a bad state by that overrides this to tear it down.
+     */
+    protected cleanUpAfterUncleanDisconnection(): void {}
+
+    /**
+     * Whether hanging up should also stop talking to the widget.
+     *
+     * True for a call that is over when you leave it. A subclass whose widget
+     * outlives the call - because the user is put back in a lobby they can
+     * rejoin from - says no, since closing would drop the listeners that hear
+     * that rejoin.
+     */
+    protected shouldCloseOnDisconnect(): boolean {
+        return true;
+    }
+
+    /**
      * Disconnects the user from the call.
+     *
+     * Always ends the call locally, whatever the widget does. A widget that
+     * never answers used to leave the call parked in Disconnecting - which
+     * counts as connected - so the user was left in a call they had left, and
+     * every other room refused to start one. Telling the widget is best effort;
+     * our own state is not.
      */
     public async disconnect(): Promise<void> {
-        if (!this.connected) throw new Error("Not connected");
+        // Idempotent rather than throwing: disconnect() is called across every
+        // other connected call inside a Promise.all when joining a new one, and
+        // a rejection there breaks the join.
+        if (!this.connected) return;
 
         this.connectionState = ConnectionState.Disconnecting;
-        await this.performDisconnection();
-        this.setDisconnected();
-        this.close();
+        let uncleanly = false;
+        try {
+            await rejectAfter(
+                this.performDisconnection(),
+                DISCONNECT_TIMEOUT_MS,
+                `The widget did not answer within ${DISCONNECT_TIMEOUT_MS}ms`,
+            );
+        } catch (e) {
+            logger.warn(`Failed to hang up cleanly in ${this.roomId}; ending the call locally anyway`, e);
+            uncleanly = true;
+        } finally {
+            this.setDisconnected();
+            // An unclean disconnection closes regardless: the widget is not
+            // answering, so there is nothing left to keep the line open for.
+            if (uncleanly || this.shouldCloseOnDisconnect()) this.close();
+        }
+        if (uncleanly) this.cleanUpAfterUncleanDisconnection();
     }
 
     /**
      * Stops further communication with the widget and tells the UI to close.
      */
     protected close(): void {
+        // Now that disconnect() always closes, close() can follow the widget's
+        // own hangup or its death, so it has to tolerate being called twice.
+        if (this.widgetApi === null) return;
         this.widgetApi = null;
         this.emit(CallEvent.Close);
     }
@@ -512,16 +619,21 @@ export class JitsiCall extends Call {
     }
 
     protected async performDisconnection(): Promise<void> {
+        const widgetApi = this.widgetApi;
+        if (widgetApi === null) return; // Nothing left to tell
+
         const response = waitForEvent(
-            this.widgetApi!,
+            widgetApi,
             `action:${ElementWidgetActions.HangupCall}`,
             (ev: CustomEvent<IWidgetApiRequest>) => {
                 ev.preventDefault();
-                this.widgetApi!.transport.reply(ev.detail, {}); // ack
+                widgetApi.transport.reply(ev.detail, {}); // ack
                 return true;
             },
+            // disconnect() bounds this already; a second timer would only race it
+            false,
         );
-        const request = this.widgetApi!.transport.send(ElementWidgetActions.HangupCall, {});
+        const request = widgetApi.transport.send(ElementWidgetActions.HangupCall, {});
         try {
             await Promise.all([request, response]);
         } catch (e) {
@@ -530,8 +642,10 @@ export class JitsiCall extends Call {
     }
 
     public close(): void {
-        this.widgetApi!.off(`action:${ElementWidgetActions.JoinCall}`, this.onJoin);
-        this.widgetApi!.off(`action:${ElementWidgetActions.HangupCall}`, this.onHangup);
+        const widgetApi = this.widgetApi;
+        if (widgetApi === null) return; // Already closed
+        widgetApi.off(`action:${ElementWidgetActions.JoinCall}`, this.onJoin);
+        widgetApi.off(`action:${ElementWidgetActions.HangupCall}`, this.onHangup);
         ActiveWidgetStore.instance.off(ActiveWidgetStoreEvent.Dock, this.onDock);
         ActiveWidgetStore.instance.off(ActiveWidgetStoreEvent.Undock, this.onUndock);
         super.close();
@@ -656,6 +770,62 @@ export class ElementCall extends Call {
     private settingsStoreCallEncryptionWatcher?: string;
     private terminationTimer?: number;
 
+    /**
+     * The mic and camera state this call still has to be put into, from the left
+     * panel's toggles. Null once the widget has confirmed it, after which the
+     * user's choices within the call itself are left alone.
+     */
+    private pendingDeviceMuteState: Required<DeviceMuteState> | null = null;
+
+    private _deviceMuteState: Required<DeviceMuteState> | null = null;
+
+    /**
+     * The mic and camera state the widget last reported being in, or null while
+     * it has not said yet. The left panel renders from this, so that its buttons
+     * agree with the call's own controls whichever of them was used.
+     */
+    public get deviceMuteState(): Required<DeviceMuteState> | null {
+        return this._deviceMuteState;
+    }
+
+    private setDeviceMuteStateFromWidget(reported: DeviceMuteState | undefined): void {
+        // A partial report says nothing about the field it omits, so there is no
+        // complete state to publish yet.
+        if (reported?.audio_enabled === undefined || reported.video_enabled === undefined) return;
+
+        const next: Required<DeviceMuteState> = {
+            audio_enabled: reported.audio_enabled,
+            video_enabled: reported.video_enabled,
+        };
+        if (deviceMuteStateMatches(this._deviceMuteState ?? undefined, next)) return;
+
+        this._deviceMuteState = next;
+        this.emit(CallEvent.DeviceMuteState, next);
+    }
+
+    /**
+     * Turn the mic or camera on or off in a call that is already running. Fields
+     * left out are unchanged.
+     *
+     * Unlike the left panel's join defaults this takes effect immediately, so it
+     * does not go through {@link pendingDeviceMuteState}: the widget only ignores
+     * the request before it has enumerated its devices, which is long past by the
+     * time a user can press a button in a call they are already in.
+     */
+    public async setDeviceMute(state: DeviceMuteState): Promise<void> {
+        if (this.widgetApi === null) return;
+
+        try {
+            const result = await this.widgetApi.transport.send<DeviceMuteState, DeviceMuteState>(
+                ElementWidgetActions.DeviceMute,
+                state,
+            );
+            this.setDeviceMuteStateFromWidget(result);
+        } catch (e) {
+            logger.warn(`Failed to change the mic or camera state for the call in ${this.roomId}`, e);
+        }
+    }
+
     public get presented(): boolean {
         return super.presented;
     }
@@ -686,7 +856,14 @@ export class ElementCall extends Call {
             return;
         } else if (isVideoRoom(room)) {
             // Video rooms already exist, so just treat as if we're joining a group call.
-            params.append("intent", ElementCallIntent.JoinExisting);
+            //
+            // Voice rather than plain JoinExisting: Element Call reads the intent
+            // to decide what the lobby starts with, and the video intent turns the
+            // camera on. Arriving in a call with video already live is startling in
+            // a way that arriving unmuted is not, and the panel has a camera button
+            // for turning it on deliberately. This matches the rule in
+            // getDefaultDeviceMuteState.
+            params.append("intent", ElementCallIntent.JoinExistingVoice);
             // Video rooms should always return to lobby.
             params.append("returnToLobby", "true");
             // Never skip the lobby, we always want to give the caller a chance to explicitly join.
@@ -891,6 +1068,13 @@ export class ElementCall extends Call {
             null,
             this.onCallEncryptionSettingsChange.bind(this),
         );
+        // Watched for this object's whole life rather than from start(). start()
+        // is fired off unawaited by RoomViewStore, so hanging the watchers off it
+        // made them depend on that call landing on the same instance the UI ends
+        // up with - which it does not when the room is opened directly, and the
+        // toggles then did nothing until the room was reselected.
+        this.watchDeviceDefaults();
+        WidgetMessagingStore.instance.on(WidgetMessagingStoreEvent.StoreMessaging, this.onStoreMessaging);
         this.updateParticipants();
     }
 
@@ -926,40 +1110,202 @@ export class ElementCall extends Call {
             this.widgetGenerationParameters,
         ).toString();
         const widgetApi = await super.start();
-        widgetApi.on(`action:${ElementWidgetActions.JoinCall}`, this.onJoin);
-        widgetApi.on(`action:${ElementWidgetActions.HangupCall}`, this.onHangup);
-        widgetApi.on(`action:${ElementWidgetActions.Close}`, this.onClose);
-        widgetApi.on(`action:${ElementWidgetActions.DeviceMute}`, this.onDeviceMute);
+        this.attachWidgetListeners(widgetApi);
+
+        // A fresh attempt at joining, so our membership has yet to be seen again
+        this.ownMembershipSeen = false;
+        this.clearOwnMembershipWatchdog();
+
+        // Join with the mic and camera state the user picked in the left panel,
+        // rather than Element Call's own default of both on.
+        this.pendingDeviceMuteState = getDefaultDeviceMuteState();
+        void this.applyPendingDeviceMuteState();
+
         return widgetApi;
     }
 
+    /**
+     * Tells Element Call to hang up.
+     *
+     * Element Call (as of 0.22) does not send a hangup action back to us: the
+     * only code that would emit one is reachable solely through
+     * `CallViewModel.leave`, which nothing in Element Call calls. Its own hangup
+     * button unmounts the scope that would have observed it. So waiting for that
+     * echo is waiting for a message that never comes, and the ack of our own
+     * request is the only confirmation available.
+     *
+     * The echo is still raced, in case a future Element Call starts sending it,
+     * or the widget hangs up by itself while we are asking.
+     */
     protected async performDisconnection(): Promise<void> {
+        const widgetApi = this.widgetApi;
+        if (widgetApi === null) return; // Nothing left to tell
+
         const response = waitForEvent(
-            this.widgetApi!,
+            widgetApi,
             `action:${ElementWidgetActions.HangupCall}`,
             (ev: CustomEvent<IWidgetApiRequest>) => {
                 ev.preventDefault();
-                this.widgetApi!.transport.reply(ev.detail, {}); // ack
+                widgetApi.transport.reply(ev.detail, {}); // ack
                 return true;
             },
+            // disconnect() bounds this already; a second timer would only race it
+            false,
         );
-        const request = this.widgetApi!.transport.send(ElementWidgetActions.HangupCall, {});
+        const request = widgetApi.transport.send(ElementWidgetActions.HangupCall, {});
         try {
-            await Promise.all([request, response]);
+            await Promise.race([request, response]);
         } catch (e) {
             throw new Error(`Failed to hangup call in room ${this.roomId}: ${e}`);
         }
     }
 
+    /**
+     * The widget API our handlers are currently on, which is not always
+     * {@link widgetApi}: a widget can be torn down and rebuilt under us, and
+     * until we move across, the one we hold is dead.
+     */
+    private attachedWidgetApi: ClientWidgetApi | null = null;
+
+    /**
+     * Which call object is currently driving each widget.
+     *
+     * At most one may: a second set of handlers would answer the same actions
+     * twice and fight over the call's state. In the app this never comes up,
+     * because `CallStore` is the only thing that builds these - but `get()`
+     * builds a fresh object every time it is called, so the invariant is worth
+     * holding rather than assuming.
+     */
+    private static readonly attachedByWidget = new Map<string, ElementCall>();
+
+    private attachWidgetListeners(widgetApi: ClientWidgetApi): void {
+        if (this.attachedWidgetApi === widgetApi) return;
+
+        const previous = ElementCall.attachedByWidget.get(this.widgetUid);
+        if (previous !== undefined && previous !== this) previous.detachFromWidget();
+        if (this.attachedWidgetApi !== null) this.detachWidgetListeners(this.attachedWidgetApi);
+
+        widgetApi.on(`action:${ElementWidgetActions.JoinCall}`, this.onJoin);
+        widgetApi.on(`action:${ElementWidgetActions.HangupCall}`, this.onHangup);
+        widgetApi.on(`action:${ElementWidgetActions.Close}`, this.onClose);
+        widgetApi.on(`action:${ElementWidgetActions.DeviceMute}`, this.onDeviceMute);
+        this.attachedWidgetApi = widgetApi;
+        ElementCall.attachedByWidget.set(this.widgetUid, this);
+    }
+
+    /**
+     * Give up the widget to another call object. Losing the listeners is not
+     * enough on its own: an object that can still *send* would go on pushing
+     * mute states at a widget it no longer hears from, and the two would chase
+     * each other.
+     */
+    private detachFromWidget(): void {
+        if (this.attachedWidgetApi !== null) this.detachWidgetListeners(this.attachedWidgetApi);
+        this.widgetApi = null;
+        this.pendingDeviceMuteState = null;
+    }
+
+    private detachWidgetListeners(widgetApi: ClientWidgetApi): void {
+        widgetApi.off(`action:${ElementWidgetActions.JoinCall}`, this.onJoin);
+        widgetApi.off(`action:${ElementWidgetActions.HangupCall}`, this.onHangup);
+        widgetApi.off(`action:${ElementWidgetActions.Close}`, this.onClose);
+        widgetApi.off(`action:${ElementWidgetActions.DeviceMute}`, this.onDeviceMute);
+        if (this.attachedWidgetApi === widgetApi) this.attachedWidgetApi = null;
+        if (ElementCall.attachedByWidget.get(this.widgetUid) === this) {
+            ElementCall.attachedByWidget.delete(this.widgetUid);
+        }
+    }
+
+    /**
+     * Attach to our widget's messaging whenever it appears, whoever created it.
+     *
+     * Not just a nicety: `start()` is the only other thing that attaches, and it
+     * is not always called. `RoomViewStore` starts the call only if the room is
+     * already in the client's store, and on a fresh load straight into a room it
+     * is not - the sync has not landed yet - so nothing starts it. The widget
+     * still renders, because `AppTile` does that independently, and the lobby
+     * works, which makes it look like everything is fine. But with no listeners
+     * attached, Element Call's `io.element.join` and `io.element.device_mute` are
+     * rejected as "unknown or unsupported from-widget action": we never learn
+     * that the user joined, the panel cannot follow the call's own mic button,
+     * and nothing we send reaches the widget. Reopening the room was the only
+     * cure, because that is what finally called `start()`.
+     *
+     * The same path covers the widget being torn down and rebuilt under us, which
+     * React strict mode, a container move, and a remount all do.
+     */
+    private attachToMessaging(messaging: WidgetMessaging): void {
+        const attach = (): void => {
+            const widgetApi = messaging.widgetApi;
+            if (!widgetApi || widgetApi === this.attachedWidgetApi) return;
+
+            logger.info(`Attaching to the call widget in ${this.roomId}`);
+            this.widgetApi = widgetApi;
+            this.attachWidgetListeners(widgetApi);
+            // The widget is on its own defaults until told otherwise, so ask for
+            // the state the panel's toggles are in.
+            this.pendingDeviceMuteState = getDefaultDeviceMuteState();
+            void this.applyPendingDeviceMuteState();
+        };
+
+        if (messaging.widgetApi) attach();
+        else messaging.once(WidgetMessagingEvent.Start, attach);
+    }
+
+    private readonly onStoreMessaging = (uid: string, messaging: WidgetMessaging): void => {
+        // Attached whether or not anything has started this call - see
+        // attachToMessaging. `attachedByWidget` keeps it to one driver.
+        if (uid !== this.widgetUid) return;
+        this.attachToMessaging(messaging);
+    };
+
     public close(): void {
-        this.widgetApi!.off(`action:${ElementWidgetActions.JoinCall}`, this.onJoin);
-        this.widgetApi!.off(`action:${ElementWidgetActions.HangupCall}`, this.onHangup);
-        this.widgetApi!.off(`action:${ElementWidgetActions.Close}`, this.onClose);
-        this.widgetApi!.off(`action:${ElementWidgetActions.DeviceMute}`, this.onDeviceMute);
+        const widgetApi = this.widgetApi;
+        if (widgetApi === null) return; // Already closed
+        this.detachWidgetListeners(widgetApi);
         super.close();
     }
 
+    /**
+     * A video room's widget outlives the call: `returnToLobby` puts the user
+     * back in the lobby rather than closing, and they can join again from
+     * there. Closing our side would take the `io.element.join` listener with
+     * it, so that second join would never reach us - the call would run with
+     * the panel insisting there was none, and none of its controls would work.
+     *
+     * Upstream had the same `close()` here, but never reached it: the hangup it
+     * waited for never came, so it threw first. Fixing that exposed this.
+     */
+    protected shouldCloseOnDisconnect(): boolean {
+        return !isVideoRoom(this.room);
+    }
+
+    /**
+     * Destroy the widget outright when it would not answer a hangup.
+     *
+     * Element Call queues an unanswered request and replays it the next time
+     * something listens, so a hangup left unanswered here would arrive at the
+     * *next* call in this widget and hang that one up instead. Killing the
+     * iframe is the only way to discard it. The widget is recreated on the next
+     * visit, which for a call room is `RoomViewStore` doing so automatically.
+     */
+    protected cleanUpAfterUncleanDisconnection(): void {
+        logger.info(`Destroying the unresponsive call widget in ${this.roomId}`);
+        ActiveWidgetStore.instance.destroyPersistentWidget(this.widget.id, this.roomId);
+        WidgetMessagingStore.instance.stopMessagingByUid(this.widgetUid);
+        if (!this.room.isCallRoom()) WidgetStore.instance.removeVirtualWidget(this.widget.id, this.roomId);
+    }
+
+    protected setDisconnected(): void {
+        this.ownMembershipSeen = false;
+        this.clearOwnMembershipWatchdog();
+        super.setDisconnected();
+    }
+
     public destroy(): void {
+        this.clearOwnMembershipWatchdog();
+        this.unwatchDeviceDefaults();
+        WidgetMessagingStore.instance.off(WidgetMessagingStoreEvent.StoreMessaging, this.onStoreMessaging);
         ActiveWidgetStore.instance.destroyPersistentWidget(this.widget.id, this.widget.roomId);
         WidgetStore.instance.removeVirtualWidget(this.widget.id, this.widget.roomId);
         this.session.off(MatrixRTCSessionEvent.MembershipsChanged, this.onMembershipChanged);
@@ -978,9 +1324,50 @@ export class ElementCall extends Call {
         if (this.session.memberships.length === 0 && !this.presented && !this.room.isCallRoom()) this.destroy();
     };
 
+    /**
+     * Whether our own device has ever appeared in the call's memberships. Until
+     * it has, its absence means the join is still in flight rather than over.
+     */
+    private ownMembershipSeen = false;
+    private ownMembershipGoneTimer?: number;
+
+    private hasOwnMembership(): boolean {
+        const userId = this.client.getUserId();
+        const deviceId = this.client.getDeviceId();
+        return this.session.memberships.some((m) => m.userId === userId && m.deviceId === deviceId);
+    }
+
+    private clearOwnMembershipWatchdog(): void {
+        clearTimeout(this.ownMembershipGoneTimer);
+        this.ownMembershipGoneTimer = undefined;
+    }
+
+    /**
+     * Watch our own RTC membership, and treat losing it as having left.
+     *
+     * This is the only signal we get when the user leaves from inside Element
+     * Call in a video room: `returnToLobby` suppresses the close action, and
+     * Element Call sends no hangup, so nothing else would ever tell us. The
+     * membership retraction, on the other hand, goes through our own widget
+     * driver, so our session sees it.
+     */
     private readonly onMembershipChanged = (): void => {
         this.updateParticipants();
         this.callType = this.session.getConsensusCallIntent() === "audio" ? CallType.Voice : CallType.Video;
+
+        if (this.hasOwnMembership()) {
+            this.ownMembershipSeen = true;
+            this.clearOwnMembershipWatchdog();
+        } else if (this.ownMembershipSeen && this.connected && this.ownMembershipGoneTimer === undefined) {
+            // Debounced: a reconnect drops the membership briefly, and that is
+            // not the user leaving.
+            this.ownMembershipGoneTimer = window.setTimeout(() => {
+                this.ownMembershipGoneTimer = undefined;
+                if (this.hasOwnMembership() || !this.connected) return;
+                logger.info(`Our membership of the call in ${this.roomId} is gone; the widget has left it`);
+                this.setDisconnected();
+            }, OWN_MEMBERSHIP_GRACE_MS);
+        }
     };
 
     private updateParticipants(): void {
@@ -1001,14 +1388,127 @@ export class ElementCall extends Call {
         this.participants = participants;
     }
 
+    private deviceDefaultsWatchers: string[] = [];
+
+    private watchDeviceDefaults(): void {
+        this.unwatchDeviceDefaults();
+        this.deviceDefaultsWatchers = (["audioInputMuted", "videoInputMuted"] as const).map((setting) =>
+            SettingsStore.watchSetting(setting, null, () => this.onDeviceDefaultsChanged()),
+        );
+    }
+
+    private unwatchDeviceDefaults(): void {
+        for (const ref of this.deviceDefaultsWatchers) SettingsStore.unwatchSetting(ref);
+        this.deviceDefaultsWatchers = [];
+    }
+
+    private onDeviceDefaultsChanged(): void {
+        // Only while waiting in the lobby. Once in the call the panel drives it
+        // directly, and the toggles are about this call rather than the next
+        // one - so there is no default left to push.
+        if (this.connected) return;
+
+        const desired = getDefaultDeviceMuteState();
+        // Nothing to say if the widget is already in that state - which it is
+        // when the change came from the widget in the first place.
+        if (deviceMuteStateMatches(this._deviceMuteState ?? undefined, desired)) return;
+
+        this.pendingDeviceMuteState = desired;
+        void this.applyPendingDeviceMuteState();
+    }
+
+    /**
+     * Asks the widget for the mic and camera state the left panel's toggles are
+     * set to, if it is not already in it.
+     *
+     * Element Call ignores the request until it has enumerated its devices, and
+     * says nothing when it does - so a request sent this early may simply be
+     * dropped. That is what {@link pendingDeviceMuteState} is for: it survives
+     * until the widget reports back a state that matches, and `onDeviceMute`
+     * asks again with each report that does not.
+     */
+    private async applyPendingDeviceMuteState(): Promise<void> {
+        const desired = this.pendingDeviceMuteState;
+        if (desired === null) return;
+        // Nothing to ask yet; whatever is pending will be asked for at start()
+        if (this.widgetApi === null) return;
+
+        try {
+            const result = await this.widgetApi.transport.send<Required<DeviceMuteState>, DeviceMuteState>(
+                ElementWidgetActions.DeviceMute,
+                desired,
+            );
+            this.setDeviceMuteStateFromWidget(result);
+            if (deviceMuteStateMatches(result, desired)) this.pendingDeviceMuteState = null;
+        } catch (e) {
+            logger.warn(`Failed to set the initial mic and camera state for the call in ${this.roomId}`, e);
+        }
+    }
+
+    /**
+     * Take the mic back off the lobby, so the panel agrees with it.
+     *
+     * Out of a call the panel's mic button shows the join default rather than any
+     * widget's state - there is no call for it to be about. So muting in Element
+     * Call's own lobby left the panel still claiming the mic was on, and it was
+     * right: that is what the next call would have started as. Rather than have
+     * the panel show one thing and the lobby another, the lobby's choice becomes
+     * the default, which is also what the user just said they wanted.
+     *
+     * The mic only. The camera is always off at join whatever anyone says, so
+     * there is no default to keep in step with.
+     */
+    private mirrorLobbyMicToDefault(reported: DeviceMuteState | undefined): void {
+        // In a call the panel is already showing the call's own state
+        if (this.connected) return;
+        // Not while the widget is still settling into the state we asked for.
+        // Those reports are the widget saying what it came up as, not the user
+        // choosing anything - and adopting them would quietly overwrite the
+        // stored default with Element Call's own every time a room was opened.
+        if (this.pendingDeviceMuteState !== null) return;
+        if (reported?.audio_enabled === undefined) return;
+        // Guard the write, or this and the watcher take turns forever
+        if (isCallDeviceEnabledByDefault("audio") === reported.audio_enabled) return;
+
+        void setCallDeviceEnabledByDefault("audio", reported.audio_enabled);
+    }
+
     private readonly onDeviceMute = (ev: CustomEvent<IWidgetApiRequest>): void => {
         ev.preventDefault();
         this.widgetApi!.transport.reply(ev.detail, {}); // ack
+
+        // Element Call reports whenever its mute state changes, however it was
+        // changed - so this is also how the left panel learns about the call's
+        // own buttons being used.
+        this.setDeviceMuteStateFromWidget(ev.detail.data);
+        this.mirrorLobbyMicToDefault(ev.detail.data);
+
+        const desired = this.pendingDeviceMuteState;
+        if (desired === null) return; // The call's own controls are in charge from here on
+
+        if (deviceMuteStateMatches(ev.detail.data, desired)) {
+            this.pendingDeviceMuteState = null;
+        } else {
+            // The widget has devices now, but started in a state the user did
+            // not ask for, so ask again.
+            void this.applyPendingDeviceMuteState();
+        }
     };
 
     private readonly onJoin = (ev: CustomEvent<IWidgetApiRequest>): void => {
         ev.preventDefault();
         this.widgetApi!.transport.reply(ev.detail, {}); // ack
+
+        // Ask again for the mic and camera state the panel's toggles are set to.
+        // Element Call re-derives its own from its defaults whenever it rebuilds
+        // its mute state, which it does every time its devices or URL parameters
+        // change - so in a room with a lobby, what we asked for at start() has
+        // usually been overwritten by the time the user actually joins. There is
+        // no URL parameter for the mic, so this is the only way to carry that
+        // choice across the lobby.
+        this.pendingDeviceMuteState = getDefaultDeviceMuteState();
+        void this.applyPendingDeviceMuteState();
+
         this.setConnected();
     };
 
@@ -1029,7 +1529,74 @@ export class ElementCall extends Call {
         this.close(); // User is done with the call; tell the UI to close it
     };
 
-    public clean(): Promise<void> {
-        return Promise.resolve();
+    /**
+     * Retracts a membership this device left behind by disconnecting uncleanly.
+     *
+     * The room list's "call in progress" badge is driven purely by the call's
+     * memberships, so a membership our previous run never got to retract - the
+     * app was killed, or the widget stopped answering - shows an ongoing call to
+     * everyone, including us, for as long as it sits there. New-style RTC
+     * memberships never expire client-side, so without this nothing would ever
+     * take it away except the server's delayed leave event, which not every
+     * homeserver implements.
+     *
+     * Both representations have to be handled: which one is in use is Element
+     * Call's `matrix_rtc_mode`, and its shipped config does not set it, so the
+     * legacy state event is the usual case and the sticky event is what a user
+     * who turned on Matrix 2.0 has.
+     *
+     * Only ever touches our own device's membership. Another device of ours may
+     * be in the call legitimately, and its membership must survive.
+     */
+    public async clean(): Promise<void> {
+        if (this.connected) return; // Never retract a membership we are using
+        const userId = this.client.getUserId();
+        const deviceId = this.client.getDeviceId();
+        if (userId === null || deviceId === null) return;
+
+        // Legacy: a state event, retracted by emptying it.
+        try {
+            const events = this.room.currentState.getStateEvents(EventType.GroupCallMemberPrefix);
+            for (const event of events) {
+                const content = event.getContent();
+                const stateKey = event.getStateKey();
+                if (event.getSender() !== userId || stateKey === undefined) continue;
+                // An empty content is already a leave. A content without our
+                // device id is either another device's or the ancient user-keyed
+                // form, which says nothing about which device it came from.
+                if (Object.keys(content).length === 0 || content.device_id !== deviceId) continue;
+
+                logger.info(`Retracting a stale call membership in ${this.roomId}`);
+                await this.client.sendStateEvent(this.roomId, EventType.GroupCallMemberPrefix, {}, stateKey);
+            }
+        } catch (e) {
+            logger.warn(`Failed to clean up a stale call membership in ${this.roomId}`, e);
+        }
+
+        // MSC4354: a sticky event, retracted by re-sending it with nothing but
+        // its sticky key - which is what the js-sdk's own leave does.
+        try {
+            for (const event of this.room._unstable_getStickyEvents()) {
+                if (event.getType() !== EventType.RTCMembership || event.getSender() !== userId) continue;
+                const content = event.getContent();
+                const stickyKey = content["msc4354_sticky_key"];
+                if (typeof stickyKey !== "string") continue;
+                if (Object.keys(content).every((key) => key === "msc4354_sticky_key")) continue; // Already a leave
+                if (content.member?.user_id !== userId || content.member?.device_id !== deviceId) continue;
+
+                logger.info(`Retracting a stale sticky call membership in ${this.roomId}`);
+                await this.client._unstable_sendStickyEvent(
+                    this.roomId,
+                    MEMBERSHIP_STICKY_DURATION_MS,
+                    null,
+                    EventType.RTCMembership,
+                    { msc4354_sticky_key: stickyKey },
+                );
+            }
+        } catch (e) {
+            // A server without MSC4354 throws UnsupportedStickyEventsEndpointError
+            // here, which is the ordinary case rather than a problem.
+            logger.debug(`Could not clean up sticky call memberships in ${this.roomId}`, e);
+        }
     }
 }

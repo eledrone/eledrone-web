@@ -40,8 +40,8 @@ export enum ElementWidgetActions {
     //   audio_enabled?: boolean,
     //   video_enabled?: boolean
     // }
-    // NOTE: this is currently unused. Its only here to make EW aware
-    // of this action so it does not throw errors.
+    // Sent toWidget by ElementCall to join with the mic and camera state chosen
+    // in the left panel; see docs/call-device-defaults.md.
     DeviceMute = "io.element.device_mute",
 }
 

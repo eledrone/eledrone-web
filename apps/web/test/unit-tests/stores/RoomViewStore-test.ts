@@ -7,7 +7,7 @@ Please see LICENSE files in the repository root for full details.
 */
 
 import { mocked } from "jest-mock-vitest-adapter";
-import { KnownMembership, MatrixError, Room } from "matrix-js-sdk/src/matrix";
+import { KnownMembership, MatrixError, Room, RoomType } from "matrix-js-sdk/src/matrix";
 import { sleep } from "matrix-js-sdk/src/utils";
 import {
     RoomViewLifecycle,
@@ -428,6 +428,35 @@ describe("RoomViewStore", function () {
         await untilDispatch(Action.ViewRoom, dis);
 
         expect(call.presented).toEqual(true);
+    });
+
+    it("starts a video room's call once the room turns up, not only on the first look", async () => {
+        const call = {
+            presented: false,
+            connectionState: ConnectionState.Disconnected,
+            widget: { id: "!widget:example.org" },
+            start: jest.fn(),
+        } as unknown as Call;
+        jest.spyOn(CallStore.instance, "getCall").mockReturnValue(call);
+        await setupAsyncStoreWithClient(CallStore.instance, MatrixClientPeg.safeGet());
+
+        // Opening a room by URL gets here before the sync has landed, so the
+        // room is not known yet and the call cannot be started.
+        const getRoom = jest.spyOn(MatrixClientPeg.safeGet(), "getRoom").mockReturnValue(null);
+        dis.dispatch<ViewRoomPayload>({ action: Action.ViewRoom, room_id: roomId, metricsTrigger: undefined });
+        await untilDispatch(Action.ViewRoom, dis);
+        expect(call.start).not.toHaveBeenCalled();
+
+        // The room arrives, and this is a video room. The later update used to
+        // just repeat the earlier "not viewing a call" because it was now the
+        // same room, so the call was never started at all.
+        const videoRoom = new Room(roomId, MatrixClientPeg.safeGet(), "@alice:example.org");
+        jest.spyOn(videoRoom, "getType").mockReturnValue(RoomType.UnstableCall);
+        getRoom.mockReturnValue(videoRoom);
+        dis.dispatch<ViewRoomPayload>({ action: Action.ViewRoom, room_id: roomId, metricsTrigger: undefined });
+        await untilDispatch(Action.ViewRoom, dis);
+
+        expect(call.start).toHaveBeenCalled();
     });
 
     it("opens a voice-intent call directly in picture-in-picture rather than maximised", async () => {

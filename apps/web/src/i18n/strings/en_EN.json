@@ -3836,6 +3836,20 @@
                 "other": "<avatars/> +%(overflowCount)s on the call"
             }
         },
+        "call_panel": {
+            "camera_off": "Turn off camera",
+            "camera_on": "Turn on camera",
+            "connected": "Voice Connected",
+            "deafen": "Deafen (not yet available)",
+            "disconnect": "Disconnect",
+            "disconnecting": "Disconnecting…",
+            "in_voice": "In voice",
+            "label": "Voice",
+            "mic_off": "Mute microphone",
+            "mic_on": "Unmute microphone",
+            "noise_suppression": "Noise suppression (not yet available)",
+            "share_screen": "Share screen (not yet available)"
+        },
         "call_toast_unknown_room": "Unknown room",
         "camera_disabled": "Your camera is turned off",
         "camera_enabled": "Your camera is still enabled",
