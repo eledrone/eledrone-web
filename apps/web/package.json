@@ -121,7 +121,7 @@
         "@babel/preset-env": "^7.12.11",
         "@babel/preset-react": "^7.12.10",
         "@babel/preset-typescript": "^7.12.7",
-        "@element-hq/element-call-embedded": "https://github.com/eledrone/eledrone-call/releases/download/embedded-f12defc/element-hq-element-call-embedded-0.0.0-eledrone.f12defc.tgz",
+        "@element-hq/element-call-embedded": "https://github.com/eledrone/eledrone-call/releases/download/embedded-5d8ae68/element-hq-element-call-embedded-0.0.0-eledrone.5d8ae68.tgz",
         "@element-hq/element-web-playwright-common": "workspace:*",
         "@fetch-mock/jest": "^0.2.20",
         "@fetch-mock/vitest": "^0.2.18",
