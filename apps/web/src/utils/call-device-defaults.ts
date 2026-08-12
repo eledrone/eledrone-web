@@ -48,13 +48,13 @@ export async function setCallDeviceEnabledByDefault(device: CallDevice, enabled:
 /**
  * The mic and camera state a newly joined call should be put into.
  *
- * @param voiceOnly Whether the user asked for a voice call. The camera stays off
- *     for those no matter what the default says - the user just said they did not
- *     want video.
+ * The camera is always off. Arriving in a call with video already live is
+ * startling in a way that arriving unmuted is not, and there is a camera button
+ * in the panel for turning it on deliberately once you are in.
  */
-export function getDefaultDeviceMuteState(voiceOnly = false): Required<DeviceMuteState> {
+export function getDefaultDeviceMuteState(): Required<DeviceMuteState> {
     return {
         audio_enabled: isCallDeviceEnabledByDefault("audio"),
-        video_enabled: !voiceOnly && isCallDeviceEnabledByDefault("video"),
+        video_enabled: false,
     };
 }

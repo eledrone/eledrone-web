@@ -19,18 +19,15 @@ import { type PointerEvent } from "react";
 
 import SettingsStore from "../../settings/SettingsStore";
 import { SettingLevel } from "../../settings/SettingLevel";
-import { AutoCollapse } from "./auto-collapse/AutoCollapse";
-import { type CallStore } from "../../stores/CallStore";
 
+/**
+ * The panel never starts collapsed, because it never collapses at all: the call
+ * panel sits along the foot of it and has to stay legible, so the panel keeps a
+ * width that fits it. A collapsed state stored by an older version is ignored
+ * rather than migrated - reading it would just hide the panel once, and the
+ * user can resize from there.
+ */
 function getInitialState(): ResizerViewSnapshot {
-    const shouldStartCollapsed =
-        SettingsStore.getValue("RoomList.isPanelCollapsed") || AutoCollapse.shouldStartCollapsed();
-    if (shouldStartCollapsed) {
-        return {
-            isCollapsed: true,
-            initialSize: 0,
-        };
-    }
     return {
         isCollapsed: false,
         initialSize: SettingsStore.getValue("RoomList.panelSize") ?? undefined,
@@ -55,30 +52,15 @@ export class ResizerViewModel
     private readonly mouseClickHandler: MouseClickHandler;
 
     /**
-     * Orchestrator for auto collapse behaviour.
-     */
-    private readonly autoCollapse: AutoCollapse;
-
-    /**
      * Tracks whether we've seen the first resized event.
      */
     private firstResizedEventSeen = false;
 
-    public constructor(callStore: CallStore) {
+    public constructor() {
         super(undefined, getInitialState());
 
         // Run onSeparatorClick when the separator is clicked.
         this.mouseClickHandler = new MouseClickHandler(this.onSeparatorClick);
-        this.autoCollapse = this.disposables.track(
-            new AutoCollapse(
-                this.onSeparatorClick,
-                () => {
-                    this.panelHandle?.collapse();
-                    this.snapshot.merge({ isCollapsed: true });
-                },
-                callStore,
-            ),
-        );
     }
 
     public onLeftPanelResize = debounce((panelSize: PanelSize): void => {
@@ -94,11 +76,6 @@ export class ResizerViewModel
             this.firstResizedEventSeen = true;
             return;
         }
-
-        // Early return if we should be ignoring this event due to some auto-collapse behaviour.
-        if (this.autoCollapse.shouldIgnoreResize) return;
-
-        this.autoCollapse.onLeftPanelResized();
 
         const isCollapsed = newSize === 0;
         // Store the size if the panel isn't collapsed.
@@ -117,18 +94,21 @@ export class ResizerViewModel
     };
 
     private onSeparatorClick = (): void => {
-        // When panel is collapsed, single click should expand the panel.
+        // The panel cannot collapse itself any more, but a width stored by an
+        // older version can still leave it at zero on the first render, so it
+        // stays possible to click one's way out of that.
         if (this.panelHandle?.isCollapsed()) {
             const lastSize = SettingsStore.getValue("RoomList.panelSize");
             this.panelHandle.resize(`${lastSize ?? 100}%`);
-            this.autoCollapse.onLeftPanelResized();
         }
     };
 
-    public onDoubleClick = (): void => {
-        // When the panel is expanded, double click should collapse.
-        if (!this.panelHandle?.isCollapsed()) this.panelHandle?.collapse();
-    };
+    /**
+     * Double clicking the separator used to collapse the panel. It no longer
+     * does: the call panel lives along the foot of the panel, and hiding it by
+     * accident - which a stray double click is - is not something to offer.
+     */
+    public onDoubleClick = (): void => {};
 
     public onPointerUp = (): void => {
         this.mouseClickHandler.onPointerUp();

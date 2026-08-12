@@ -365,10 +365,21 @@ export class RoomViewStore extends EventEmitter {
 
             let viewingCall = payload.view_call;
             if (viewingCall === undefined) {
-                // Default behavior: keep the same call state as before if viewing the same room
-                if (payload.room_id === this.state.roomId) viewingCall = this.state.viewingCall;
-                // Always view the call in video rooms
-                else if (room && isVideoRoom(room)) viewingCall = true;
+                // Always view the call in video rooms.
+                //
+                // Checked before the same-room case on purpose. Opening a room
+                // directly by URL gets here before the sync has landed, so
+                // `room` is still null and this defaults to false - and every
+                // later update for that room then just repeated that false,
+                // because it was now "the same room". The call was never
+                // started, which left Element Call talking to a client with no
+                // listeners attached: it would report "unknown or unsupported
+                // from-widget action" for join and device_mute, so the panel
+                // never saw the call and could not drive it. Reopening the room
+                // was the only way out.
+                if (room && isVideoRoom(room)) viewingCall = true;
+                // Otherwise keep the same call state as before if viewing the same room
+                else if (payload.room_id === this.state.roomId) viewingCall = this.state.viewingCall;
                 // Otherwise, only view if actively connected
                 else viewingCall = CallStore.instance.getActiveCall(payload.room_id) !== null;
             }

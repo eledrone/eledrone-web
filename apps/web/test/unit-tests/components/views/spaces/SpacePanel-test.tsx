@@ -8,7 +8,7 @@ Please see LICENSE files in the repository root for full details.
 */
 
 import React from "react";
-import { render, screen, fireEvent, act, cleanup, waitFor, within } from "jest-matrix-react";
+import { render, screen, fireEvent, act, cleanup, within } from "jest-matrix-react";
 import { mocked } from "jest-mock";
 import { type MatrixClient, type Room } from "matrix-js-sdk/src/matrix";
 
@@ -22,8 +22,6 @@ import DMRoomMap from "../../../../../src/utils/DMRoomMap";
 import { type SpaceNotificationState } from "../../../../../src/stores/notifications/SpaceNotificationState";
 import SettingsStore from "../../../../../src/settings/SettingsStore";
 import UnwrappedSpacePanel from "../../../../../src/components/views/spaces/SpacePanel";
-import defaultDispatcher from "../../../../../src/dispatcher/dispatcher";
-import { Action } from "../../../../../src/dispatcher/actions";
 
 // DND test utilities based on
 // https://github.com/colinrobertbrooks/react-beautiful-dnd-test-utils/issues/18#issuecomment-1373388693
@@ -202,12 +200,11 @@ describe("<SpacePanel />", () => {
         expect(sdkContext.spaceStore.moveRootSpace).toHaveBeenCalledWith(0, 1);
     });
 
-    it("should be able to open the user menu via dispatcher", async () => {
+    it("should no longer carry the user menu or the settings button", () => {
+        // Both moved to the call panel along the foot of the app; the dispatcher
+        // route into the user menu is covered by the CallPanel suite.
         const { baseElement } = render(<SpacePanel />);
-        defaultDispatcher.dispatch({ action: Action.ToggleUserMenu });
-        await waitFor(() => {
-            // Menu exists outside the component due to Portals, so select it manually.
-            expect(baseElement.querySelector("div[aria-label='User menu']")).toBeInTheDocument();
-        });
+        expect(baseElement.querySelector("button[aria-label='User menu']")).toBeNull();
+        expect(baseElement.querySelector("[aria-label='Quick settings']")).toBeNull();
     });
 });

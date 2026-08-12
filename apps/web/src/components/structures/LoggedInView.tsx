@@ -43,6 +43,7 @@ import Modal from "../../Modal";
 import { getKeyBindingsManager } from "../../KeyBindingsManager";
 import { type IOpts } from "../../createRoom";
 import SpacePanel from "../views/spaces/SpacePanel";
+import { CallPanelDock } from "../views/voip/CallPanelDock";
 import { LegacyCallHandlerEvent } from "../../LegacyCallHandler";
 import AudioFeedArrayForLegacyCall from "../views/voip/AudioFeedArrayForLegacyCall";
 import { OwnProfileStore } from "../../stores/OwnProfileStore";
@@ -188,7 +189,7 @@ class LoggedInView extends React.Component<IProps, IState> {
 
     private getResizerViewModel(): ResizerViewModel {
         if (!this.resizerViewModel) {
-            this.resizerViewModel = new ResizerViewModel(this.context.callStore);
+            this.resizerViewModel = new ResizerViewModel();
         }
         return this.resizerViewModel;
     }
@@ -697,20 +698,24 @@ class LoggedInView extends React.Component<IProps, IState> {
             // Resizable layout with a draggable separator. The SpacePanel lives inside GroupView
             // (leftPanel omits it).
             content = (
-                <GroupView vm={resizerViewModel}>
-                    <SpacePanel />
-                    <LeftResizablePanelView
-                        vm={resizerViewModel}
-                        className="mx_LeftPanel_panel"
-                        minSize="200px"
-                        maxSize="370px"
-                        defaultSize="370px"
-                    >
-                        {leftPanel}
-                    </LeftResizablePanelView>
-                    <SeparatorView className="mx_Separator" vm={resizerViewModel} />
-                    <Panel className="mx_LeftPanel_panel">{roomView}</Panel>
-                </GroupView>
+                <>
+                    <GroupView vm={resizerViewModel}>
+                        <SpacePanel />
+                        <LeftResizablePanelView
+                            vm={resizerViewModel}
+                            className="mx_LeftPanel_panel"
+                            minSize="200px"
+                            maxSize="370px"
+                            defaultSize="370px"
+                        >
+                            {leftPanel}
+                        </LeftResizablePanelView>
+                        <SeparatorView className="mx_Separator" vm={resizerViewModel} />
+                        <Panel className="mx_LeftPanel_panel">{roomView}</Panel>
+                    </GroupView>
+                    {/* Outside the group on purpose - see CallPanelDock */}
+                    <CallPanelDock />
+                </>
             );
         } else {
             // Fallback layout for a module's full-screen view (e.g. multiroom) which must not use the

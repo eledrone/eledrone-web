@@ -125,9 +125,19 @@ export type UserMenuViewProps = {
      * Class name for the wrapper
      */
     className?: string;
+    /**
+     * Which side of the trigger the menu opens on. Defaults to the right, for a
+     * trigger in a vertical rail; a trigger in a bar along the bottom wants
+     * "top" instead.
+     */
+    side?: "top" | "right" | "bottom" | "left";
+    /**
+     * How the menu lines up with the trigger along that side.
+     */
+    align?: "start" | "center" | "end";
 };
 
-export function UserMenuView({ vm, className }: UserMenuViewProps): JSX.Element {
+export function UserMenuView({ vm, className, side = "right", align = "start" }: UserMenuViewProps): JSX.Element {
     const {
         userId,
         displayName,
@@ -165,8 +175,8 @@ export function UserMenuView({ vm, className }: UserMenuViewProps): JSX.Element 
                 title={_t("menus|user_menu|title")}
                 trigger={trigger}
                 onOpenChange={vm.setOpen}
-                align="start"
-                side="right"
+                align={align}
+                side={side}
                 className={styles.container}
             >
                 <section className={classNames(styles.profile, styles.profilePrimary)}>

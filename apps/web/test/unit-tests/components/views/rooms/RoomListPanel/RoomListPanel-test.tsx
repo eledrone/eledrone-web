@@ -65,10 +65,11 @@ describe("<RoomListPanel />", () => {
         expect(screen.queryByRole("button", { name: "Search Ctrl K" })).toBeNull();
     });
 
-    it("should render the mic and camera toggles at the foot of the panel", () => {
+    it("should not render the call panel, which now spans the space rail too", () => {
         renderComponent();
-        expect(screen.getByRole("button", { name: "Mute your microphone when joining calls" })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Turn off your camera when joining calls" })).toBeInTheDocument();
+        // It moved out to CallPanelDock, which sits below both columns rather
+        // than inside this one. Covered by the CallPanel suite.
+        expect(screen.queryByRole("button", { name: "Mute microphone" })).toBeNull();
     });
 
     it("should move to the next landmark when the shortcut key is pressed", async () => {

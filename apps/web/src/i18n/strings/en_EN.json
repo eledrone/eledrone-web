@@ -3836,6 +3836,21 @@
                 "other": "<avatars/> +%(overflowCount)s on the call"
             }
         },
+        "call_panel": {
+            "camera_off": "Turn off camera",
+            "camera_on": "Turn on camera",
+            "connected": "Voice Connected",
+            "deafen": "Deafen (not yet available)",
+            "disconnect": "Disconnect",
+            "disconnecting": "Disconnecting…",
+            "in_voice": "In voice",
+            "label": "Voice",
+            "mic_off": "Mute microphone",
+            "mic_on": "Unmute microphone",
+            "noise_suppression": "Noise suppression (not yet available)",
+            "settings": "Voice settings",
+            "share_screen": "Share screen (not yet available)"
+        },
         "call_toast_unknown_room": "Unknown room",
         "camera_disabled": "Your camera is turned off",
         "camera_enabled": "Your camera is still enabled",
@@ -3846,13 +3861,6 @@
         "connection_lost_description": "You cannot place calls without a connection to the server.",
         "consulting": "Consulting with %(transferTarget)s. <a>Transfer to %(transferee)s</a>",
         "default_device": "Default Device",
-        "default_devices": {
-            "disable_camera": "Turn off your camera when joining calls",
-            "disable_microphone": "Mute your microphone when joining calls",
-            "enable_camera": "Turn on your camera when joining calls",
-            "enable_microphone": "Unmute your microphone when joining calls",
-            "label": "Microphone and camera defaults"
-        },
         "dial": "Dial",
         "dialpad": "Dialpad",
         "disable_camera": "Turn off camera",

@@ -23,10 +23,9 @@ describe("call device defaults", () => {
         await SettingsStore.setValue("videoInputMuted", null, SettingLevel.DEVICE, false);
     });
 
-    it("treats both devices as on until told otherwise", () => {
+    it("treats the microphone as on until told otherwise", () => {
         expect(isCallDeviceEnabledByDefault("audio")).toBe(true);
-        expect(isCallDeviceEnabledByDefault("video")).toBe(true);
-        expect(getDefaultDeviceMuteState()).toEqual({ audio_enabled: true, video_enabled: true });
+        expect(getDefaultDeviceMuteState()).toEqual({ audio_enabled: true, video_enabled: false });
     });
 
     it("stores each device's choice separately", async () => {
@@ -34,7 +33,7 @@ describe("call device defaults", () => {
 
         expect(isCallDeviceEnabledByDefault("audio")).toBe(false);
         expect(isCallDeviceEnabledByDefault("video")).toBe(true);
-        expect(getDefaultDeviceMuteState()).toEqual({ audio_enabled: false, video_enabled: true });
+        expect(getDefaultDeviceMuteState()).toEqual({ audio_enabled: false, video_enabled: false });
     });
 
     it("keeps the choice on this device, not on the account", async () => {
@@ -45,7 +44,12 @@ describe("call device defaults", () => {
         expect(SettingsStore.getValueAt(SettingLevel.DEVICE, "videoInputMuted", null, true, true)).toBe(true);
     });
 
-    it("leaves the camera off for a voice call even when it is on by default", () => {
-        expect(getDefaultDeviceMuteState(true)).toEqual({ audio_enabled: true, video_enabled: false });
+    it("never joins with the camera on, whatever the stored default says", async () => {
+        // Arriving in a call already on camera is startling in a way that
+        // arriving unmuted is not; the panel has a button for turning it on.
+        await setCallDeviceEnabledByDefault("video", true);
+
+        expect(isCallDeviceEnabledByDefault("video")).toBe(true);
+        expect(getDefaultDeviceMuteState().video_enabled).toBe(false);
     });
 });

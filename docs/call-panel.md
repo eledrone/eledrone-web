@@ -1,10 +1,13 @@
-# The call panel — working plan
+# The call panel
 
-A Discord-style panel at the foot of the room list: who you are and how you sound
+A Discord-style panel along the foot of the app: who you are and how you sound
 when idle, plus call controls once you are in a call.
 
-This is a plan, not documentation. Delete it when the work is done and fold
-whatever is still true into `call-device-defaults.md`.
+This note is the reasoning behind the local changes listed in
+[MAINTAINING.md](MAINTAINING.md); delete it once they are upstream or no longer
+needed. The join-time mic and camera defaults it drives are described in
+[call-device-defaults.md](call-device-defaults.md), and the disconnection
+machinery behind its hangup button in [call-hangup.md](call-hangup.md).
 
 ## The two states
 
@@ -17,14 +20,14 @@ whatever is still true into `call-device-defaults.md`.
 └────────────────────────────────────────────┘
 ```
 
-Mic and deafen here say how the _next_ call is joined. The gear opens settings.
+Mic and deafen here say how the _next_ call is joined.
 
 **In a call** — a section appears above the user row:
 
 ```
 ┌────────────────────────────────────────────┐
 │ ((•)) Voice Connected      [noise] [hangup]│
-│       voice / Space name                   │
+│       Space name                           │
 │                                            │
 │       [camera]  [screen share]             │
 ├────────────────────────────────────────────┤
@@ -36,97 +39,114 @@ Mic and deafen here say how the _next_ call is joined. The gear opens settings.
 The user row does not change shape between states — only its status line
 (`Online` → `In voice`) and what the mic and deafen buttons act on.
 
-## Decisions already taken
+## Where it sits, and why that was awkward
 
-| Question                             | Answer                                                                |
-| ------------------------------------ | --------------------------------------------------------------------- |
-| Camera on join                       | **Always off.** No camera join-toggle; the camera button is live-only |
-| Does deafen mute the mic?            | **Yes**                                                               |
-| Is the panel visible outside a call? | **Yes** — idle state above                                            |
-| Where is deafen visible?             | **Room list and header too**, for people who have not joined          |
+It spans the foot of the space rail **and** the room list, so it cannot be a child
+of either. The obvious arrangement — wrap both columns in a flex column and put
+the panel underneath — does not work: the resizable layout is a
+`react-resizable-panels` group, and the group finds its panels by walking its own
+direct DOM children looking for `data-panel`. Put anything between the group and
+its panels and it finds one panel instead of two, produces no separator hit
+region, and dragging the separator silently stops working.
 
-That last one is the expensive choice and it drives the mechanism below.
+So `CallPanelDock` sits **outside** the group, as a sibling, absolutely positioned
+over the corner it covers. `.mx_MatrixChat` is already `position: relative` and the
+group is its only in-flow child, so the two boxes coincide and
+`inset-block-end: 0; inset-inline-start: 0` lands where it should. Being outside
+the group also means the group's `overflow: hidden` cannot clip it.
 
-## What already exists
+The cost is that the width has to be measured rather than inherited.
+`CallPanelDock` keeps one `ResizeObserver` and writes two custom properties onto
+`.mx_MatrixChat`:
 
-`feat/call-device-defaults` (`fe789fe390`) added mic/camera join defaults stored
-in `audioInputMuted`/`videoInputMuted`, pushed into the widget with the
-`io.element.device_mute` action, with `pendingDeviceMuteState` retrying because
-Element Call drops that request until its devices enumerate. See
-[call-device-defaults.md](call-device-defaults.md).
+| Property                      | Is                                                     |
+| ----------------------------- | ------------------------------------------------------ |
+| `--eledrone-call-dock-width`  | the room list's right edge, relative to the app's left |
+| `--eledrone-call-dock-height` | the dock's own height, which grows when a call starts  |
 
-Its explicit design rule — _"they do not control a call that is already
-running"_ — is what this work inverts. The settings plumbing and the retry
-machinery carry over; the "defaults only" scoping does not.
+The room list's right edge already includes the rail, so one measurement covers
+both columns. Three things are observed, and all three are needed: the room list
+(the separator resizes it), the rail (expanding it _moves_ the room list without
+resizing it, because the group preserves pixel sizes, so nothing else would fire),
+and the dock itself. Writes are guarded behind a last-value check — the dock is
+observed and its width comes from a property we set, so writing unconditionally is
+a feedback loop that produces `ResizeObserver loop completed with undelivered
+notifications`.
 
-## What the widget API allows
+The height is a property rather than a layout consequence because the dock
+overlays: `.mx_SpacePanel` and `.mx_RoomListPanel` both reserve it with
+`padding-block-end`, so nothing ends up hidden underneath. Note there is no global
+`box-sizing: border-box` in this codebase, so both set it locally.
 
-Element Call handles exactly four actions:
+One inherited-CSS edit was needed: `_MatrixChat.pcss` gives every child that is
+not on a small exclusion list `height: 100%`, which would make the dock cover the
+whole app. `.mx_CallPanelDock` joins that list.
 
-```
-im.vector.hangup, io.element.close, io.element.device_mute, io.element.join
-```
+## Adaptivity
 
-| Control                                                | Mechanism                                                     | Needs Element Call changes? |
-| ------------------------------------------------------ | ------------------------------------------------------------- | --------------------------- |
-| Mic (live)                                             | `device_mute` `audio_enabled`                                 | no                          |
-| Camera (live)                                          | `device_mute` `video_enabled`                                 | no                          |
-| Disconnect                                             | `im.vector.hangup`                                            | no                          |
-| Settings, names, status text, noise-suppression button | Element Web only                                              | no                          |
-| **Deafen — silencing others**                          | new action                                                    | **yes**                     |
-| **Screen share**                                       | new action                                                    | **yes**                     |
-| **Connection quality / ping**                          | new action; `connectionQuality` appears nowhere in its source | **yes**                     |
+The panel never wraps, never hides a control, and never changes shape. It only
+ever says less: as it narrows the text truncates, "userna…" over "In voic…", down
+to a few characters. The buttons and the avatar are `flex: 0 0 auto`, since a
+Compound `IconButton` is a flex item like any other and would otherwise be
+squeezed narrower than its own icon.
 
-## How deafen is published
+The trap here is `Flex`'s default `align="start"`. In a **column** that is what
+sizes children horizontally, so every column needs `align="stretch"` — twice
+over. Without it on the panel itself the rows sat at their intrinsic ~210px,
+short of the sidebar's edge. Without it on the text columns the lines took their
+full length and overflowed rather than truncating, because `text-overflow:
+ellipsis` does nothing until the box is narrower than the text in it.
 
-Not as a field on `m.call.member`. That event is owned by `MatrixRTCSession`
-_inside the widget_, so writing to the same state key from Element Web would
-clobber the membership and break the call.
+The floor that keeps this honest: the user row needs about 172px, and the room
+list's own `minSize` of 200px plus the 68px rail gives 268px. Anyone adding a
+fourth control should redo that sum; it is written down in `_CallPanel.pcss`.
 
-Use a separate state event — `io.eledrone.call.deafen`, state key per user (or
-`user|device` if per-device is wanted) — which Element Web can write directly,
-since Element Web is where the button is. Upstream can then restructure
-`m.call.member` freely without touching us.
+## The room list no longer collapses
 
-Chosen over LiveKit participant attributes because attributes only reach people
-already connected to the SFU, and the requirement is that deafen shows in the
-room list to someone who has _not_ joined.
+It used to collapse to zero three ways: on any call connecting, below a 768px
+viewport, and on double-clicking the separator. All three are gone, along with the
+whole `auto-collapse` mechanism and the `collapsible` prop on the panel. The panel
+lives along the foot of that column and has to stay legible, and a bar hanging off
+a 68px rail is not a useful thing to offer.
 
-Two consequences to handle:
+The collapse-on-call one was also a bug in its own right: joining a voice room
+squashed the room list, which is not something anyone asked for.
 
-- **Debounce the publish.** Every toggle is a homeserver write, permanently in
-  room history, and rate-limited — a user drumming the button will hit 429s.
-  Apply the flag locally at once, publish on a delay.
-- **Ignore stale events.** Only render deafen for users who appear in
-  `Call.participants` (`hooks/useCall.ts:41`). A client that crashed leaves its
-  event behind; if it is only ever read for current participants, no cleanup
-  logic is needed.
+A collapsed state stored by an older version is ignored rather than migrated —
+reading it would hide the panel once and teach the user nothing. Clicking the
+separator still expands a panel found at zero width, as a way out of exactly that.
 
-## Phases
+## What moved here from the space rail
 
-**1 — The panel, Element Web only.** Both states, real mic / camera / disconnect,
-camera always off on join. Status line, noise-suppression button and screen share
-render as placeholders. Deafen renders disabled. Shippable on its own.
+The user menu and the quick settings button, both of them. Everything a user does
+to themselves is now in one place, and the rail is only spaces.
 
-**2 — Ship our own Element Call.** Build and depend on `embedded/web` from
-`eledrone-call`. No user-visible change. Note the existing `eledrone-call`
-pipeline publishes a _Docker image for the server_; the app embeds an **npm
-package**, which is a separate artifact not built today. Everything below is
-blocked on this.
+- The avatar **is** the user menu's trigger, the same component with the same
+  behaviour, opening upwards instead of to the right. `UserMenuView` gained
+  optional `side` and `align` props for that, defaulting to what it did before.
+  `Action.ToggleUserMenu` moved with it — Ctrl+Shift+U still works. It must not be
+  handled in both places at once, or the two subscribers toggle twice and cancel
+  each other out.
+- The gear is `QuickSettingsButton`, unchanged apart from a tooltip placement and
+  one new entry: the voice settings, which are worth a single click from a panel
+  whose whole subject is the microphone.
 
-**3 — Deafen, end to end.** Element Call gains an action that silences remote
-audio; Element Web mutes the mic, writes the state event, and renders the icon in
-the panel, the room list and the room header.
+Both were spaced for a vertical rail, so the panel resets their margins.
 
-**4 — Screen share and the connection indicator.** Both need new Element Call
-actions. The ping/status icon needs LiveKit connection quality surfaced first.
+## Still to do
 
-## Open questions
+Deafen, screen share and the connection indicator all need Element Call to gain
+actions it does not have, so they render disabled rather than hidden — the panel
+keeps its shape for when they start working. Shipping our own Element Call build
+is what unblocks them; the existing `eledrone-call` pipeline publishes a Docker
+image for the server, while the app embeds an npm package, which is a separate
+artifact not built today.
 
-- **What does un-deafen do to the mic?** Discord remembers whether you were
-  separately muted and restores that. The simpler option is to leave the mic
-  muted and make the user unmute deliberately. This decides whether the panel has
-  to remember pre-deafen state.
-- **Is deafen per-device or per-user?** Decides the state key.
-- **Does the idle deafen toggle mean "join deafened"?** If so it needs the phase 3
-  action at join time, not just mid-call.
+When deafen does arrive it should be published as its own state event
+(`io.eledrone.call.deafen`, state key per user), **not** as a field on
+`m.call.member`: that event belongs to `MatrixRTCSession` inside the widget, and
+writing to the same state key from here would clobber the membership and break the
+call. Publish on a debounce — every toggle is a homeserver write, permanently in
+room history and rate-limited — and only render it for users who are in
+`Call.participants`, so a client that crashed and left its event behind needs no
+cleanup logic.

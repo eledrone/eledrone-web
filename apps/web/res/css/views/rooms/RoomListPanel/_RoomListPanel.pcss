@@ -8,4 +8,8 @@
 .mx_RoomListPanel {
     background-color: var(--cpd-color-bg-canvas-default);
     height: 100%;
+    /* The call panel dock lies over the foot of this column, so the room list
+       stops short of it rather than running underneath. */
+    box-sizing: border-box;
+    padding-block-end: var(--eledrone-call-dock-height, 0);
 }

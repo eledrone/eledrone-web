@@ -1,0 +1,133 @@
+/*
+Copyright 2026 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only OR GPL-3.0-only OR LicenseRef-Element-Commercial
+Please see LICENSE files in the repository root for full details.
+*/
+
+/*
+ * The dock spans the foot of the space rail and the room list together. It is
+ * positioned over that corner rather than laid out in it, because the resizable
+ * layout will not tolerate anything between its group and its panels - see
+ * CallPanelDock. Its width is measured there and arrives as a custom property;
+ * the two columns above reserve its height.
+ */
+.mx_CallPanelDock {
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline-start: 0;
+    /* The fallback is the collapsed rail plus the room list's own minimum, i.e.
+       the narrowest this is ever legitimately measured at. It only applies if
+       the measurement in CallPanelDock never ran, and a panel of roughly the
+       right size is a far better failure than an invisible one - a zero here
+       reads as the feature being missing. */
+    width: var(--eledrone-call-dock-width, 268px);
+    /* Over the space panel, which sets z-index: 1 */
+    z-index: 2;
+    /* Nothing may spill sideways over the separator or the room view */
+    overflow: hidden;
+}
+
+.mx_CallPanel {
+    border-top: 1px solid var(--cpd-color-bg-subtle-primary);
+    background-color: var(--cpd-color-bg-canvas-default);
+
+    .mx_CallPanel_button_off svg {
+        color: var(--cpd-color-icon-critical-primary);
+    }
+
+    .mx_CallPanel_button_hangup svg {
+        color: var(--cpd-color-icon-critical-primary);
+    }
+
+    /* The call section, when there is a call */
+    .mx_CallPanel_call {
+        padding: var(--cpd-space-2x) var(--cpd-space-3x);
+        border-bottom: 1px solid var(--cpd-color-bg-subtle-primary);
+    }
+
+    .mx_CallPanel_callIcon {
+        color: var(--cpd-color-icon-success-primary);
+        flex: 0 0 auto;
+    }
+
+    /* Both text blocks share this: take the leftover width, and let the buttons
+       beside them keep their own, rather than being pushed out by a long name */
+    .mx_CallPanel_callStatus,
+    .mx_CallPanel_userText {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    /*
+     * The controls are the point of the panel, so they are the last thing to
+     * give up room: the text beside them shrinks and truncates instead. Without
+     * this the buttons would be squeezed narrower than their icons, since they
+     * are flex items like any other.
+     */
+    .mx_CallPanel_button,
+    .mx_CallPanel_userMenu,
+    .mx_CallPanel_settings {
+        flex: 0 0 auto;
+    }
+
+    .mx_CallPanel_callStatus_state {
+        font: var(--cpd-font-body-sm-semibold);
+        color: var(--cpd-color-text-success-primary);
+    }
+
+    .mx_CallPanel_callStatus_room,
+    .mx_CallPanel_userText_status {
+        font: var(--cpd-font-body-xs-regular);
+        color: var(--cpd-color-text-secondary);
+    }
+
+    /* A long room or display name truncates instead of wrapping the row */
+    .mx_CallPanel_callStatus_state,
+    .mx_CallPanel_callStatus_room,
+    .mx_CallPanel_userText_name,
+    .mx_CallPanel_userText_status {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .mx_CallPanel_user {
+        padding: var(--cpd-space-2x) var(--cpd-space-3x);
+    }
+
+    .mx_CallPanel_userText_name {
+        font: var(--cpd-font-body-sm-semibold);
+        color: var(--cpd-color-text-primary);
+    }
+
+    /* Both of these came from the space rail and are spaced for a vertical
+       stack, which in a row reads as the panel being lopsided. */
+    .mx_CallPanel_userMenu {
+        margin: 0;
+
+        > button {
+            margin: 0;
+            padding-inline-start: 0;
+        }
+    }
+
+    .mx_CallPanel_settings {
+        display: flex;
+
+        .mx_QuickSettingsButton {
+            margin: 0;
+        }
+    }
+}
+
+/*
+ * The text simply gets shorter as the panel narrows - "userna…" over "In voic…"
+ * - rather than disappearing at some threshold. Every control stays put, so the
+ * panel keeps its shape all the way down and only ever says less.
+ *
+ * The floor this is safe against: the user row needs 2 x 12px padding + 36px
+ * avatar + 8px gap + 3 x 32px buttons + 2 x 8px gaps = 172px, and the room
+ * list's own minimum of 200px plus the 68px rail is 268px, so there is always
+ * room for a few characters. Anyone adding a fourth control should redo that sum.
+ */

@@ -31,7 +31,6 @@ import {
     PlusIcon,
     ChevronRightIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
-import { useCreateAutoDisposedViewModel, UserMenu } from "@element-hq/web-shared-components";
 
 import { _t } from "../../../languageHandler";
 import { useContextMenu } from "../../structures/ContextMenu";
@@ -57,7 +56,6 @@ import IconizedContextMenu, {
 import SettingsStore from "../../../settings/SettingsStore";
 import { SettingLevel } from "../../../settings/SettingLevel";
 import UIStore from "../../../stores/UIStore";
-import QuickSettingsButton from "./QuickSettingsButton";
 import { useSettingValue } from "../../../hooks/useSettings";
 import IndicatorScrollbar from "../../structures/IndicatorScrollbar";
 import { useDispatcher } from "../../../hooks/useDispatcher";
@@ -75,9 +73,7 @@ import { Landmark, LandmarkNavigation } from "../../../accessibility/LandmarkNav
 import { KeyboardShortcut } from "../settings/KeyboardShortcut";
 import { ModuleApi } from "../../../modules/Api.ts";
 import { useModuleSpacePanelItems } from "../../../modules/ExtrasApi.ts";
-import { UserMenuViewModel } from "../../../viewmodels/menus/UserMenuViewModel.ts";
 import { SDKContext } from "../../../contexts/SDKContext.ts";
-import { OwnProfileStore } from "../../../stores/OwnProfileStore.ts";
 import { type SDKContextClass } from "../../../contexts/SDKContextClass.ts";
 
 const useSpaces = (): [Room[], MetaSpace[], Room[], SpaceKey] => {
@@ -360,7 +356,6 @@ const InnerSpacePanel = React.memo<IInnerSpacePanelProps>(
 
 const SpacePanel: React.FC = () => {
     const sdkContext = useContext(SDKContext);
-    const client = sdkContext.client!;
     const [dragging, setDragging] = useState(false);
     const [isPanelCollapsed, setPanelCollapsed] = useState(true);
     const ref = useRef<HTMLDivElement>(null);
@@ -375,25 +370,9 @@ const SpacePanel: React.FC = () => {
         }
     });
 
-    const userMenuVm = useCreateAutoDisposedViewModel(
-        () =>
-            new UserMenuViewModel(
-                { ownProfileStore: OwnProfileStore.instance },
-                defaultDispatcher,
-                client,
-                isPanelCollapsed,
-            ),
-    );
-
-    useDispatcher(defaultDispatcher, (payload) => {
-        if (payload.action === Action.ToggleUserMenu) {
-            userMenuVm.setOpen(!userMenuVm.getSnapshot().open);
-        }
-    });
-
-    useEffect(() => {
-        userMenuVm.setExpanded(!isPanelCollapsed);
-    }, [userMenuVm, isPanelCollapsed]);
+    // The user menu and the quick settings button both moved to the call panel
+    // along the foot of the app, which is where everything the user does to
+    // themselves now lives.
 
     return (
         <RovingTabIndexProvider handleHomeEnd handleUpDown={!dragging}>
@@ -432,7 +411,6 @@ const SpacePanel: React.FC = () => {
                         ref={ref}
                         aria-label={_t("common|spaces")}
                     >
-                        <UserMenu vm={userMenuVm} className="mx_UserMenu" />
                         <AccessibleButton
                             className={classNames("mx_SpacePanel_toggleCollapse", {
                                 expanded: !isPanelCollapsed,
@@ -464,7 +442,6 @@ const SpacePanel: React.FC = () => {
 
                         <ThreadsActivityCentre displayButtonLabel={!isPanelCollapsed} />
 
-                        <QuickSettingsButton isPanelCollapsed={isPanelCollapsed} />
                     </nav>
                 </DragDropContext>
             )}
