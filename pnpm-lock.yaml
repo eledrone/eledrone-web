@@ -767,8 +767,8 @@ importers:
         specifier: ^7.12.7
         version: 7.29.7(@babel/core@7.29.7)(supports-color@10.2.2)
       '@element-hq/element-call-embedded':
-        specifier: https://github.com/eledrone/eledrone-call/releases/download/embedded-5d8ae68/element-hq-element-call-embedded-0.0.0-eledrone.5d8ae68.tgz
-        version: https://github.com/eledrone/eledrone-call/releases/download/embedded-5d8ae68/element-hq-element-call-embedded-0.0.0-eledrone.5d8ae68.tgz
+        specifier: https://github.com/eledrone/eledrone-call/releases/download/embedded-a02a47d/element-hq-element-call-embedded-0.0.0-eledrone.a02a47d.tgz
+        version: https://github.com/eledrone/eledrone-call/releases/download/embedded-a02a47d/element-hq-element-call-embedded-0.0.0-eledrone.a02a47d.tgz
       '@element-hq/element-web-playwright-common':
         specifier: workspace:*
         version: link:../../packages/playwright-common
@@ -2833,9 +2833,9 @@ packages:
     engines: {node: '>=14.14'}
     hasBin: true
 
-  '@element-hq/element-call-embedded@https://github.com/eledrone/eledrone-call/releases/download/embedded-5d8ae68/element-hq-element-call-embedded-0.0.0-eledrone.5d8ae68.tgz':
-    resolution: {integrity: sha512-JDlmpFQ1JCKCad3WahzBqemmCMB8F/8pp2fKLal0lrNdea5e2AC94HkwlNbv7slMa1IRuHs8ztT+imJFbo9+2A==, tarball: https://github.com/eledrone/eledrone-call/releases/download/embedded-5d8ae68/element-hq-element-call-embedded-0.0.0-eledrone.5d8ae68.tgz}
-    version: 0.0.0-eledrone.5d8ae68
+  '@element-hq/element-call-embedded@https://github.com/eledrone/eledrone-call/releases/download/embedded-a02a47d/element-hq-element-call-embedded-0.0.0-eledrone.a02a47d.tgz':
+    resolution: {integrity: sha512-aSgJm1bSfdnjhGDDQFSAVUk+adgSzNd48uTlRT1w/G0zU97mTmOm/MH8kTKV5c3vTJssVzOY7/fHjeMpL6xLHg==, tarball: https://github.com/eledrone/eledrone-call/releases/download/embedded-a02a47d/element-hq-element-call-embedded-0.0.0-eledrone.a02a47d.tgz}
+    version: 0.0.0-eledrone.a02a47d
 
   '@emnapi/core@1.10.0':
     resolution: {integrity: sha512-yq6OkJ4p82CAfPl0u9mQebQHKPJkY7WrIuk205cTYnYe+k2Z8YBh11FrbRG/H6ihirqcacOgl2BIO8oyMQLeXw==}
@@ -15545,7 +15545,7 @@ snapshots:
       - supports-color
     optional: true
 
-  '@element-hq/element-call-embedded@https://github.com/eledrone/eledrone-call/releases/download/embedded-5d8ae68/element-hq-element-call-embedded-0.0.0-eledrone.5d8ae68.tgz': {}
+  '@element-hq/element-call-embedded@https://github.com/eledrone/eledrone-call/releases/download/embedded-a02a47d/element-hq-element-call-embedded-0.0.0-eledrone.a02a47d.tgz': {}
 
   '@emnapi/core@1.10.0':
     dependencies:
