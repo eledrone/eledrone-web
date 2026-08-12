@@ -49,9 +49,15 @@ export function getThemesDirectory(): string {
  * sanitised, so a bug in the caller cannot quietly write somewhere else.
  */
 export function resolveThemePath(fileName: string): string {
+    // Separators are checked directly rather than via path.basename, which
+    // answers differently per platform: to POSIX a backslash is an ordinary
+    // character, so "sub\theme.css" reads as one legal file name on Linux and as
+    // a subdirectory on Windows. Deciding that here rather than letting the host
+    // decide means a name is either acceptable everywhere or refused everywhere,
+    // and a themes directory carried between machines cannot change meaning.
     const isPlainCssFileName =
         fileName.length > 0 &&
-        fileName === path.basename(fileName) &&
+        !/[\\/]/.test(fileName) &&
         !fileName.startsWith(".") &&
         path.extname(fileName).toLowerCase() === ".css";
 
