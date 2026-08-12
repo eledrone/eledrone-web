@@ -125,9 +125,7 @@ describe("<ThemePanel />", () => {
         fireEvent.change(swatch, { target: { value: "#ff4fa3" } });
 
         await waitFor(() =>
-            expect(document.querySelector("style[data-css-palette]")?.textContent).toContain(
-                "--cpd-color-green-900:",
-            ),
+            expect(document.querySelector("style[data-css-palette]")?.textContent).toContain("--cpd-color-green-900:"),
         );
         expect(document.querySelector("style[data-css-theme]")?.textContent).toContain("--thing: pink");
     });

@@ -19,9 +19,7 @@ import type BasePlatform from "../BasePlatform";
 const store = ThemeStore.instance;
 
 const appliedThemeNames = (): string[] =>
-    [...document.querySelectorAll("style[data-css-theme]")].map((style) =>
-        style.getAttribute("data-css-theme")!,
-    );
+    [...document.querySelectorAll("style[data-css-theme]")].map((style) => style.getAttribute("data-css-theme")!);
 
 const appliedThemeCss = (): string =>
     [...document.querySelectorAll("style[data-css-theme]")].map((style) => style.textContent).join("\n");

@@ -245,10 +245,7 @@ export class ThemeStore extends TypedEventEmitter<ThemeEvent, EventHandlerMap> {
             // Written whatever the themes are doing: the cascade decides which
             // of the two owns any given token, so the picked colours stay in
             // effect everywhere a theme has nothing to say.
-            palette: generatePaletteCss(
-                this.colourSetting("accentColour"),
-                this.colourSetting("surfaceColour"),
-            ),
+            palette: generatePaletteCss(this.colourSetting("accentColour"), this.colourSetting("surfaceColour")),
         };
     }
 
