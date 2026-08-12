@@ -2,7 +2,10 @@
 
 exports[`UnverifiedSessionToast when rendering the toast should render as expected 1`] = `
 <body>
-  <div>
+  <div />
+  <div
+    id="mx_ToastContainer_container"
+  >
     <div
       class="mx_ToastContainer"
       role="alert"

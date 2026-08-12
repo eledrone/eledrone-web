@@ -7,6 +7,7 @@ Please see LICENSE files in the repository root for full details.
 */
 
 import React from "react";
+import { createPortal } from "react-dom";
 import classNames from "classnames";
 import { IconButton, Text } from "@vector-im/compound-web";
 import { type EmptyObject } from "matrix-js-sdk/src/matrix";
@@ -96,10 +97,30 @@ export default class ToastContainer extends React.Component<EmptyObject, IState>
                 mx_ToastContainer_stacked: isStacked,
             });
         }
-        return toast ? (
-            <div className={containerClasses} role="alert">
-                {toast}
-            </div>
-        ) : null;
+        return toast
+            ? createPortal(
+                  <div className={containerClasses} role="alert">
+                      {toast}
+                  </div>,
+                  getOrCreateContainer(),
+              )
+            : null;
     }
+}
+
+/**
+ * The toasts are portalled to `<body>` rather than rendered where they sit in
+ * the tree, because `#matrixchat` is `contain: strict` and so nothing inside it
+ * can paint above the containers that are appended to the body - the call
+ * widget among them. Rendered in place, a toast asking the user to verify their
+ * device ends up underneath the call they are on.
+ */
+function getOrCreateContainer(): HTMLDivElement {
+    let container = document.getElementById("mx_ToastContainer_container") as HTMLDivElement | null;
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "mx_ToastContainer_container";
+        document.body.appendChild(container);
+    }
+    return container;
 }
