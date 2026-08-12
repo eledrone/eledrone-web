@@ -3848,7 +3848,6 @@
             "mic_off": "Mute microphone",
             "mic_on": "Unmute microphone",
             "noise_suppression": "Noise suppression (not yet available)",
-            "settings": "Voice settings",
             "share_screen": "Share screen (not yet available)"
         },
         "call_toast_unknown_room": "Unknown room",
