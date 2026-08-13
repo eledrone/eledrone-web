@@ -7,7 +7,7 @@ Please see LICENSE files in the repository root for full details.
 
 import React, { type JSX, type ReactNode, useCallback } from "react";
 import { IconButton } from "@vector-im/compound-web";
-import { Flex, useCreateAutoDisposedViewModel, UserMenu } from "@element-hq/web-shared-components";
+import { Clock, Flex, useCreateAutoDisposedViewModel, UserMenu } from "@element-hq/web-shared-components";
 import MicOnIcon from "@vector-im/compound-design-tokens/assets/web/icons/mic-on-solid";
 import MicOffIcon from "@vector-im/compound-design-tokens/assets/web/icons/mic-off-solid";
 import VideoCallOnIcon from "@vector-im/compound-design-tokens/assets/web/icons/video-call-solid";
@@ -22,6 +22,7 @@ import { _t } from "../../../languageHandler";
 import { useSettingValue } from "../../../hooks/useSettings";
 import { setCallDeviceEnabledByDefault } from "../../../utils/call-device-defaults";
 import { useConnectedCall, useDeviceMuteState } from "../../../hooks/useConnectedCall";
+import { useCallDuration } from "../../../hooks/useCallDuration";
 import { CallEvent, ConnectionState, type ElementCall } from "../../../models/Call";
 import { useEventEmitterState, useTypedEventEmitterState } from "../../../hooks/useEventEmitter";
 import { OwnProfileStore } from "../../../stores/OwnProfileStore";
@@ -73,6 +74,7 @@ const InCallSection = ({ call }: { call: ElementCall }): JSX.Element => {
     const cameraOn = muteState?.video_enabled ?? false;
     // Call.room is protected, so the name comes from the client instead.
     const roomName = client.getRoom(call.roomId)?.name ?? "";
+    const duration = useCallDuration(call);
 
     // Hanging up is bounded to a few seconds even against a dead widget, so
     // this window is short; it exists so a second press cannot land on a call
@@ -106,9 +108,21 @@ const InCallSection = ({ call }: { call: ElementCall }): JSX.Element => {
                     <span className="mx_CallPanel_callStatus_state">
                         {disconnecting ? _t("voip|call_panel|disconnecting") : _t("voip|call_panel|connected")}
                     </span>
-                    <span className="mx_CallPanel_callStatus_room" title={roomName}>
-                        {roomName}
-                    </span>
+                    {/* The room name gives up width to the timer rather than
+                        the other way round: the name can say less and still be
+                        recognisable, while a clipped clock says nothing. */}
+                    <Flex align="center" gap="var(--cpd-space-1x)">
+                        <span className="mx_CallPanel_callStatus_room" title={roomName}>
+                            {roomName}
+                        </span>
+                        <Clock
+                            className="mx_CallPanel_callStatus_timer"
+                            seconds={duration}
+                            // It changes every second and says nothing anyone
+                            // needs told about, so it is never announced.
+                            aria-live="off"
+                        />
+                    </Flex>
                 </Flex>
                 <PanelButton label={_t("voip|call_panel|noise_suppression")} disabled>
                     <VolumeOnIcon />

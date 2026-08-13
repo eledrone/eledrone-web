@@ -8,7 +8,7 @@ Please see LICENSE files in the repository root for full details.
 // @vitest-environment happy-dom
 
 import React from "react";
-import { render, screen, waitFor } from "test-utils-rtl";
+import { act, render, screen, waitFor } from "test-utils-rtl";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TypedEventEmitter } from "matrix-js-sdk/src/matrix";
@@ -250,6 +250,56 @@ describe("<CallPanel />", () => {
             renderPanel();
 
             expect(screen.getByText("Voice Connected")).toBeInTheDocument();
+        });
+
+        it("counts how long the call has been up", () => {
+            vi.useFakeTimers();
+            try {
+                CallStore.instance.connectedCalls.add(mockCall({ audio_enabled: true, video_enabled: false }));
+                renderPanel();
+
+                expect(screen.getByText("00:00")).toBeInTheDocument();
+
+                act(() => {
+                    vi.advanceTimersByTime(65_000);
+                });
+
+                expect(screen.getByText("01:05")).toBeInTheDocument();
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it("counts from the moment of rejoining, not of the first join", () => {
+            // The Call object outlives the connection - it belongs to the room,
+            // not to the visit - so a timer keyed to the object rather than to
+            // the connection would come back mid-count on rejoining.
+            vi.useFakeTimers();
+            try {
+                const call = mockCall({ audio_enabled: true, video_enabled: false });
+                CallStore.instance.connectedCalls.add(call);
+                renderPanel();
+
+                act(() => {
+                    vi.advanceTimersByTime(30_000);
+                });
+                expect(screen.getByText("00:30")).toBeInTheDocument();
+
+                act(() => {
+                    Object.defineProperty(call, "participants", { value: someoneElsesParticipants() });
+                    call.emit(CallEvent.Participants, call.participants, new Map());
+                });
+                expect(screen.queryByText("Voice Connected")).not.toBeInTheDocument();
+
+                act(() => {
+                    Object.defineProperty(call, "participants", { value: ourParticipants() });
+                    call.emit(CallEvent.Participants, call.participants, new Map());
+                });
+
+                expect(screen.getByText("00:00")).toBeInTheDocument();
+            } finally {
+                vi.useRealTimers();
+            }
         });
 
         it("drops the call once our own device is no longer in it", async () => {

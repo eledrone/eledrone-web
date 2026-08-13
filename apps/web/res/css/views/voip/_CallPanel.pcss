@@ -82,6 +82,30 @@ Please see LICENSE files in the repository root for full details.
         color: var(--cpd-color-text-secondary);
     }
 
+    /* Sharing its row with the timer now, so it has to be allowed to shrink -
+       a flex item's min-width: auto would otherwise hold it at its full text
+       width and push the clock out of the panel instead of truncating. */
+    .mx_CallPanel_callStatus_room {
+        flex: 0 1 auto;
+        min-width: 0;
+    }
+
+    /*
+     * How long the call has been up. Tinted to match the line above it, so the
+     * connected state and its clock read as one thing rather than as a label
+     * with an unrelated number beside it.
+     *
+     * Never truncated: the room name gives up the width instead, since a name
+     * still reads at a few characters and a clipped clock does not. Tabular
+     * figures keep it from twitching sideways as the digits change.
+     */
+    .mx_CallPanel_callStatus_timer {
+        flex: 0 0 auto;
+        font: var(--cpd-font-body-xs-medium);
+        font-variant-numeric: tabular-nums;
+        color: var(--cpd-color-text-success-primary);
+    }
+
     /* A long room or display name truncates instead of wrapping the row */
     .mx_CallPanel_callStatus_state,
     .mx_CallPanel_callStatus_room,
