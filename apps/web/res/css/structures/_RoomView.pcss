@@ -37,8 +37,18 @@ Please see LICENSE files in the repository root for full details.
         flex: 1 1 0;
     }
 
+    /* No width here. A column flex item already stretches to its container, and
+       `width: 100%` resolves against the container's *content* box - nothing in
+       this codebase sets box-sizing globally - so the margin and any padding
+       were added on top of a box that was already full width. The composer's
+       right edge landed 2px past the container, and #matrixchat is
+       `contain: strict`, so that overflow was clipped rather than scrolled:
+       the edge was never drawn and the composer ran flush off the window.
+       Letting the stretch do the sizing makes the margin an inset again.
+
+       The same 100% is why the threads composer, which adds `padding: 0 8px`,
+       overhung its panel by 18px. */
     .mx_MessageComposer {
-        width: 100%;
         flex: 0 0 auto;
         margin-right: 2px;
         padding-bottom: 1em;
