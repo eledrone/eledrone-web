@@ -94,6 +94,26 @@ Please see LICENSE files in the repository root for full details.
     z-index: 4;
 }
 
+/*
+ * Compound's menus, tooltips and popovers are Radix underneath, and Radix
+ * portals them straight to <body> rather than into any of the containers
+ * above - so giving those containers a stacking order left these behind it.
+ * The symptom is a menu that opens and does nothing visible: the state flips
+ * and the content mounts, it is simply painted under the dialog it was opened
+ * from.
+ *
+ * Radix copies the *content's* computed z-index onto the wrapper it creates,
+ * and Compound sets none, so the wrapper arrives carrying `z-index: auto` as
+ * an inline style. That stacked above the containers only for as long as they
+ * had no z-index of their own. Hence both halves of this rule: the number,
+ * because a menu has to draw over whatever it was opened from, and the
+ * `!important`, because it is competing with an inline style and would
+ * otherwise lose.
+ */
+body > [data-radix-popper-content-wrapper] {
+    z-index: 5 !important;
+}
+
 /**
  * Disable pointer events inside the persistentElement container when the room-list is being resized.
  * This is necessary to avoid the pointer events from being hijacked by the content rendered inside
