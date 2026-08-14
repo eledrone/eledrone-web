@@ -27,7 +27,7 @@ Mic and deafen here say how the _next_ call is joined.
 ```
 ┌────────────────────────────────────────────┐
 │ ((•)) Voice Connected      [noise] [hangup]│
-│       Space name                           │
+│       Space name     05:23                 │
 │                                            │
 │       [camera]  [screen share]             │
 ├────────────────────────────────────────────┤
@@ -35,6 +35,11 @@ Mic and deafen here say how the _next_ call is joined.
 │    ●      In voice                  [gear] │
 └────────────────────────────────────────────┘
 ```
+
+The clock counts from the moment the call connects, and is tinted to match the
+line above it so the state and its duration read as one thing. It is the room
+name that gives up width as the panel narrows, never the clock: a name still
+reads at a few characters, and a clipped clock does not.
 
 The user row does not change shape between states — only its status line
 (`Online` → `In voice`) and what the mic and deafen buttons act on.
